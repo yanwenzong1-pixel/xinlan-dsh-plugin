@@ -1,0 +1,31 @@
+# 统一换行：仓库内存 LF，检出时按平台处理
+* text=auto
+
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.cjs  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.md   text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.ps1  text eol=crlf
+
+# 二进制文件不做换行转换
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.map  binary
+
+# 构建产物不计入语言统计
+lib/**/*.js   linguist-generated=true
+lib/**/*.map  linguist-generated=true
+lib/**/*.d.ts linguist-generated=true
