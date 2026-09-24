@@ -1,0 +1,11 @@
+# dsh bundle patch: inserts this plugin into a profile's layer stack.
+#
+# 契约（`packages/boot/app-boot/src/profile.ts:792-797`）：凡是列进 profile `dsh.profile.bundles`
+# 的包，都**必须**在 package.json 里声明 `dsh.bundle.patch` 指向本文件，且本文件必须真实存在；
+# 否则宿主加载 profile 时直接抛
+#   `profile bundle "<pkg>" declares no dsh.bundle in its package.json`
+# 并**退出**——爆炸半径是整个 dsh-web（用户所有会话/面板），不是"这个插件不生效"。
+# 2026-09-16 事故即由此而来（本包先被挂进 bundles，缺这两个东西，宿主崩溃循环）。
+- insert:
+    - id: dsh-ptc-task
+      name: '@dsh-external/dsh-ptc-task'

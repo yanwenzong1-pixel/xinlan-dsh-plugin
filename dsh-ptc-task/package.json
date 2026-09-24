@@ -1,0 +1,27 @@
+{
+  "name": "@dsh-external/dsh-ptc-task",
+  "version": "0.1.0",
+  "description": "PTC 任务派发插件：向宿主注册 ptc_task 工具，把一整件事交给 PTC 作用域的子代理（工具以生成的 TypeScript SDK 呈现，用 run_code 组合多步操作）执行。",
+  "private": true,
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "build": "pwsh -NoProfile -File scripts/build.ps1",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "BSD-3-Clause"
+}

@@ -1,0 +1,65 @@
+{
+  "name": "@dsh-external/dsh-quick-append",
+  "version": "0.5.1",
+  "description": "DSH composer quick append button with per-workspace preset text and stored commands (v0.5.1: command dialog/menu UI polished to the project design spec — spec mask, ct-button/ct-input/ct-menu-item recipes, head+footer dividers, violet selection; v0.5.0: second wrench button + drop-up command menu + command editor dialog, z 110/111 registered; v0.4.1: default append text updated to the user-specified revision — Ponytail full mode + generic root *.md specs; v0.4.0: append text isolated per workspace + persisted, legacy global key migrated, visible save-failure feedback)",
+  "private": true,
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "license": "BSD-3-Clause",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-llm": ">=0.0.1-rc <2",
+    "@deepseek-ai/dsh-tools": ">=0.0.1-rc <2",
+    "cordis": ">=4.0.0-rc <5",
+    "schemastery": "^3.18.0",
+    "@deepseek-ai/dsh-client-ui-slots": ">=0.0.1-rc <2",
+    "@deepseek-ai/dsh-client-ui-conversation": ">=0.0.1-rc <2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.0",
+    "tsdown": "^0.22.14",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:client": "tsdown",
+    "check:client-shape": "node --test test/client-shape.test.mjs",
+    "postbuild:client": "npm run check:client-shape",
+    "test": "node --test"
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  }
+}
