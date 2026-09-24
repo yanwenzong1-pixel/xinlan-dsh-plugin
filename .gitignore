@@ -1,0 +1,17 @@
+# 依赖目录（含嵌套的 node_modules）
+node_modules/
+
+# 包管理器缓存
+.pnpm-store/
+.npm/
+
+# 编辑器 / 系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 临时文件与日志
+*.tmp
+*.tsbuildinfo
+temp/
