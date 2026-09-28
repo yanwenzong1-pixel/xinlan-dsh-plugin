@@ -1,8 +1,204 @@
 # @dsh-external/dsh-quick-append
 
-DSH composer quick append button with editable preset text
+DSH 输入区（composer）右侧的两个工具按钮：
 
-由 dsh-super-injector dev_scaffold_plugin 生成。
+- **「点击追加」**（闪电图标）：一键把该工作区的**追加文案**接到草稿后面；右键编辑文案。
+- **「预存命令」**（扳手图标，位于「点击追加」左侧 5px）：左键上拉菜单一键插入常用指令；右键管理指令。
+
+「LLM优化」打开时，左键会先把草稿交给宿主侧的 LLM 优化（可带图片），再把追加文案接在优化结果之后。
+
+- 当前版本：`0.5.1`（`package.json`）
+- 形态：宿主半 `src/index.ts`（提供 `/@dsh-external/dsh-quick-append/api` 与 `/api/optimize`）+
+  客户端半 `src/client/index.ts`（插槽 `conversation.input.right`，`order: 10`）
+- 宿主注入：`['webServer', 'llm', 'attachments']`（`src/index.ts:37`）；客户端注入 `['slots']`，
+  `conversation` 服务为**可选**依赖（未装配时纯文本优化，图片静默不纳入并提示，`src/client/index.ts:1883-1884`）
+
+## 一、按钮与交互
+
+| 操作 | 「点击追加」 | 「预存命令」 |
+| --- | --- | --- |
+| 左键 | LLM优化 off：`草稿 + '\n\n' + 追加文案`（空草稿只放文案）；on：先优化再追加 | 按钮**正上方 5px** 拉起菜单；上方放不下自动翻转到下方（四向限位） |
+| 右键 | 打开编辑弹层（编辑/保存本工作区追加文案） | 打开编辑弹窗（列表 + 表单，增/改/删） |
+| 键盘 | 输入区聚焦时 `Shift+Alt+F` = 左键（`src/client/index.ts:1483`） | 原生 button 可 Tab；Enter/Space = 左键；`Shift+F10` / 菜单键 = 右键（`:1561`） |
+| 阻断 | 解析中拦截并提示 `提示词正在生成，请稍后再试！` | 同样拦截（不绕过既有互斥，`:1145`） |
+
+- 正文字面量：按钮 title 为 `点击追加 / 右键设置`（`:1573`），扳手按钮 `aria-label` = `预存命令`（`:146`）。
+- 两按钮同在一个 flex 容器（`gap: 5px`，非绝对定位），共用样式常量 `ICON_BUTTON_STYLE` 与
+  图标属性 `ICON_SVG_PROPS` —— 尺寸/圆角/边框/颜色一致由结构保证。
+- 浮层用 `react-dom` 的 `createPortal` 挂到 `document.body`（绕开 composer 的 `overflow`/`backdrop-filter` 裁剪），
+  卸载时收回宿主节点与全部全局监听；同一时刻只允许一个浮层展开（两个弹层互斥）。
+- 图层：既有「点击追加」弹层 = 100；预存命令 `COMMAND_LAYER = { menu: 110, mask: 110, dialog: 111 }`（`src/lib/command-store.ts:49`）。
+
+## 二、三条链路
+
+### 1. LLM 优化（宿主策略单点，v0.3.1 起）
+
+模型与思考强度**由宿主决定**，客户端不再发送、弹窗也不再暴露控件（旧客户端仍可传 `model` /
+`reasoningEffort`，会被归一化兜底）：
+
+| 项 | 值 | 依据 |
+| --- | --- | --- |
+| provider | `deepseek-official` | `src/lib/optimize.ts:17` |
+| 默认模型 | `deepseek-flash`（DeepSeek-V41-Flash，1M 上下文档、支持图片输入） | `:15`、`src/index.ts:5-7` |
+| 思考强度 | 默认 `max`（可选 `off` / `low` / `high` / `max`） | `:19`、`:22` |
+| 采样 | `temperature: 0` | 旧 README v0.3.0 节 |
+| 单次超时 | `600000` ms | `:26` |
+| 重试 | 共 `3` 次尝试（瞬态失败：调用错误/超时/空输出/解析失败）；末次仍有非空正文 → 纯文本兜底 | `:24`、`src/index.ts:12-14` |
+| 输出 | JSON 信封 `{"optimized","imageNote"}`，解析走 `extractJSON` 多路兜底 | 同上 |
+| 请求体上限 | 64MB（`MAX_BODY_BYTES = 64 << 20`，含图片 base64） | `src/index.ts:40` |
+| 客户端断开 | 立即中止上游流（不继续烧 token） | `src/index.ts:14` |
+
+请求字段固定为 `['draft','context','cwd','images']`（`optimize.ts:34`），只接受这四个。
+
+### 2. 图片（多模态）
+
+- 输入区当前图片（顺序）与正文合并进**同一条 user 消息**；客户端传 base64，宿主经
+  `ctx.attachments.saveImage` 准入生成引用。
+- 发送前预处理（`src/lib/images.ts` 决策 + canvas 执行）：png/jpeg/webp ≤4MB 原样；>4MB → 最长边 ≤2048 + JPEG(0.85)；
+  gif → 静态首帧 JPEG；不支持格式/空文件剔除。
+- **全部准入失败 → 降级纯文本**并在结果中标注「未采纳图片信息」（响应 `imagesDropped=true`），
+  不允许编造图片内容。
+
+### 3. 规范上下文（spec-context）
+
+点击「追加」时，宿主把项目约束性规范合并成上下文（`src/lib/spec-context.ts`）：
+
+- 范围：项目根 5 份规范（README / plugin-design-spec-template / PLUGIN-LOADER-SPEC /
+  CANVAS-INTERACTION-SPEC / JSON-CSS-SPEC，`:19`）+ `docs/` 全部文档 + 各插件目录 SPEC/README/DESIGN；
+- 缓存：`<$DSH_HOME|~/.dsh>/dsh-quick-append/spec-cache/<cwd-hash12>/`（`manifest.json` +
+  `spec-context.cache` gzip，原子写），**不写入源仓库**（`:5`、`:82`、`:207-209`）；
+- 增量：源文件 mtime/size 与 manifest 比对，全未变且内容哈希一致 → 直接读缓存；任一变化/损坏 → 原子重建；
+- 净化：标题级剔除「更新日志/变更记录/操作日志/运行摘要/验收清单/路线图」等非约束章节；
+- 预算：`DEFAULT_BUDGET_CHARS = 240000`（≈60k token），超限按「整文件优先保留」（根规范 > docs > 插件目录）裁剪并标注省略清单（`:65`）。
+
+## 三、持久化（全部在浏览器 localStorage）
+
+| 键 | 结构 | 说明 |
+| --- | --- | --- |
+| `dsh-quick-append.presets` | `{version:1, workspaces:{[workspaceId]:{appendText}}}` | 追加文案，**按工作区隔离**（`preset-store.ts:17`、`:57-60`） |
+| `dsh-quick-append.commands` | `{version:1, commands:[{id,title,content}]}` | 预存命令，数组顺序即展示顺序（`command-store.ts:26-27`） |
+| `dsh-quick-append.llm` | `'1'` / `'0'` | 「LLM优化」开关，缺省视为开（`client/index.ts:137`、`:837`） |
+| `dsh-quick-append.goal` | `'1'` / `'0'` | goal 模式开关，缺省视为开（`:138`、`:845`） |
+| `dsh-quick-append.text` | 旧版单键文案 | **迁移源**：首次读到就迁给当前工作区，随后删除旧键（`preset-store.ts:18`、`client/index.ts:737-750`） |
+
+- 「当前工作区」解析：工作区列表里 `sessionIds` 含当前会话的那条的 `workspaceId`；解析不出 →
+  占位桶 `__no-workspace__`（`preset-store.ts:21`）。
+- 写入：打开弹窗时**捕获**工作区键，保存带键提交（编辑期间切换工作区只写回原工作区）；
+  合并写入窗口 `PRESET_WRITE_COALESCE_MS = 250`；`pagehide` / `visibilitychange` / 切工作区 / 卸载四处 flush。
+- 失败处理：**先内存后落盘**，失败弹可见提示（追加文案 `追加文案保存失败：…（当前页面内仍可继续使用，刷新后会丢失）`、
+  预存命令 `预存命令保存失败：…`），不假装写成功。
+- 多标签页：监听 `storage` 事件失效缓存并重算（先失效再 flush，避免用旧缓存整包覆盖别的标签页刚写的内容）。
+- 脏数据宽容：整包损坏 → 空列表 + 「读取失败」提示；部分损坏 → 保留可读条目 + 「已忽略 N 条」。
+
+## 四、预存命令的校验与交互细节
+
+- 上限：标题 `COMMAND_TITLE_MAX = 50` 字、正文 `COMMAND_CONTENT_MAX = 2000` 字，trim 后必填
+  （`command-store.ts:30-31`、`:251-252`）。
+- 插入口径与「点击追加」一致：`草稿 + '\n\n' + 正文`，空草稿只放正文，**永不覆盖**用户已写内容；
+  插入后焦点与光标落到插入文本末尾（新输入面是 Lexical contenteditable，落位要等一帧）。
+- 删除为**内联两步确认**：第一下只变「确认删除」并起 `DELETE_CONFIRM_MS = 4000` 计时；
+  关闭前对未保存变更先问「确定放弃？」，提供「继续编辑」。
+- 空数据不展示空菜单，改弹引导 toast：`暂无预存命令，右键『预存命令』可录入指令`（`:60`）。
+- 其它固定文案：`预存命令已保存` / `预存命令已删除`（`:61-62`）。
+- 尺寸常量：菜单 `320×260`、弹窗 `380×460`、屏幕边缘留白 `5px`、菜单与按钮间距 `5px`（`:52-56`、`:37`、`:40`）。
+
+## 五、Toast 文案（锁定，勿改）
+
+| 时机 | 文案 | 时长 |
+| --- | --- | --- |
+| 解析中拦截（左/右键、快捷键） | `提示词正在生成，请稍后再试！`（`interaction.ts:22`） | 2500ms（`:25`） |
+| 优化任务运行中（常驻） | `正在优化提示词中…`（`:66`） | 不自动消失 |
+| 优化成功 | `优化完成`（`:68`） | 2000ms（`:70`） |
+| 追加保存成功 | `已保存`（`preset-store.ts:24`） | — |
+
+## 六、安装与接入
+
+```yaml
+- insert:
+    - id: dsh-quick-append
+      name: '@dsh-external/dsh-quick-append'
+```
+
+- **宿主侧无配置项**：`apply(ctx)` 不声明 Config，行为由源码常量决定（换模型/思考强度要改
+  `src/lib/optimize.ts` 后重新构建）。
+- 契约（与仓库内其余插件一致）：包名进 profile 的 `dsh.profile.bundles` 时，`package.json` 必须声明
+  `dsh.bundle.patch` 指向真实存在的 `cordis.patch.yml`，否则宿主加载 profile 直接报错退出（影响整个 dsh-web）。
+- 宿主需装配 `webServer`、`llm`、`attachments`；客户端需 `conversation.input.right` 插槽。
+
+## 七、构建与测试
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1   # npm run build
+            -Checkout "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"          # 必须传真实 checkout（见下）
+npm run typecheck                                                       # tsc -p tsconfig.json --noEmit
+npm test                                                                # node --test
+```
+
+> ⚠️ 构建脚本调的是 **Windows PowerShell**（`package.json:34`），不是 `pwsh`；`scripts/` 下**没有** `build.sh`。
+> `-Checkout` 的默认值是脱敏占位路径 `C:\Users\<user>\...`，**不传参直接 `npm run build` 会在第 24 行抛「checkout 不可用」**。
+
+`scripts/build.ps1` 先按精确 junction 链接构建依赖（cordis / schemastery / dsh-tools / dsh-llm /
+react / react-dom / dsh-client-ui-slots / dsh-client-ui-conversation / tsdown / @types/node），
+再 `tsc` 编译宿主半、`tsdown` 打包客户端半，最后校验 `lib/client.js` 的
+`window.__ModuleLoader__.load` 工厂头、插件 id、factory 签名与工厂尾。
+前置条件：`-Checkout` 指向的 DSH 源码 checkout（含 `node_modules\.bin\tsc.cmd` 与 `node_modules\tsdown`）；
+参数 `-SkipLinks`、`-SkipClient`。**构建脚本不跑测试**，测试是独立步骤。
+
+**本机实测**（2026-09-28）：`node --test` → **231 例 / 230 通过 / 1 失败**。失败的是
+`test/shortcut-target.test.mjs:82` 契约用例 —— 它把官方源码路径写成了脱敏占位符
+`C:/Users/<user>/Documents/...`（第 85 行），实际文件不存在 ⇒ `ENOENT`。
+同类占位符还有 `scripts/build.ps1:15` 的 `-Checkout` 默认值与 `scripts/e2e-preset-commands.mjs:24-26`
+（后者可用 `PW_PATH` 环境变量覆盖 playwright 那一处）。**占位符是脱敏的产物，不是笔误**：
+要跑这些脚本/用例，需把 `<user>` / `<repo>` 换成本机真实用户名与仓库名（或改成从环境变量推导）。
+
+真机端到端（需本机 DSH 环境，package.json 里没有对应 script，需手工执行）：
+
+```powershell
+node scripts/e2e-preset-workspace.mjs    # 追加文案按工作区隔离（20 项）
+node scripts/e2e-preset-commands.mjs     # 预存命令菜单/弹窗（60 项，含 computed style 实测）
+```
+
+## 八、注意事项与坑
+
+1. **新建工作区的追加文案是空的**：默认文案不再兜底，需要点弹窗里的「填入默认文案」一键填回
+   （`preset-store.ts:26-28`）。
+2. **文案按工作区 ID 隔离**：换工作区就是换一份文案，互不影响；编辑期间切换工作区也只写回原工作区。
+3. **换模型要改源码**：v0.3.1 起模型/思考强度由宿主单点决定（默认 `deepseek-flash` + `max`），
+   弹窗里已无相关控件；旧 README 提到的「优化模型/思考强度」设置项**已不存在**——以源码为准。
+4. **解析中不重复发请求**：左键/右键/快捷键都被拦截成固定 toast，按钮保持正常可点击外观
+   （不 disabled、不 loading 遮罩）。
+5. **客户端改动必须重新构建并刷新浏览器**：只改 `src/client/**` 也要跑 `tsdown`，然后 Ctrl+F5。
+6. **`Shift+Alt+F` 依赖输入面判定**：新输入面认 `data-composer-input`（Lexical contenteditable），
+   旧 textarea 作为兜底；判定为纯函数 + 回归测试（`test/shortcut-target.test.mjs`）。
+7. **localStorage 是唯一存储**：清浏览器数据 = 丢文案与预存命令；隐私模式/配额超限会有可见失败提示，
+   本页仍可用但刷新即丢。
+8. **图片全失败会降级**：此时只在结果里标注「未采纳图片信息」，不会编造图片内容。
+9. **spec 上下文缓存写在 `$DSH_HOME`**，不进源仓库；缓存损坏会自动回退全量重建，不抛错。
+10. **客户端源码不受 tsc 检查**：`tsconfig.json` 显式 `exclude: ["src/client"]`，客户端正确性靠
+    「逻辑下沉到零依赖叶子 + `test/*-wiring.test.mjs` 扫源码文本」两类兜底 ⇒ **重构客户端会误伤文本门禁**，
+    改客户端必须同步改门禁。
+11. **`exports["./client"].types` 指向不存在的文件**：`package.json:47` 指向 `./lib/types/client/index.d.ts`，
+    但 `lib/types/` 下没有 `client` 目录 ⇒ 引用方拿不到客户端类型声明（运行不受影响）。
+12. **客户端仍在发宿主从不读的 `preset` 字段**（`src/client/index.ts:1455`；宿主只读
+    `draft`/`context`/`cwd`/`images`）。这是**登记在案的现状**（冻结断言 `test/client-shape.test.mjs`
+    标为「Q11 待核实」）：客户端已自行追加过预设，**宿主一旦开始读它就会把预设叠加两次** ——
+    改任一侧都必须在同一提交内改另一侧。
+13. **宿主端点是"本机信任"模型**：只校验 POST、体积 ≤64MB、JSON 可解析、`draft` 非空，**无鉴权、无调用方身份校验**；
+    任何能访问该路径的请求都会触发一次真实 LLM 调用（烧 token）。
+14. **隐私面**：优化会把项目根规范、`docs/` 全部 md、`plugins/*/{SPEC,README,DESIGN}.md`（净化 + 24 万字符预算内）
+    连同最近 3 轮对话与图片 base64 发往 `deepseek-official`；净化只按标题剔除日志类章节，**不做脱敏**。
+15. **客户端 `apply` 吞异常**：整段 try-catch，崩溃只 `console.error('[dsh-quick-append] apply crashed: …')`
+    （好处是不影响 dsh web 启动，代价是"按钮就是没出现"，需看浏览器控制台才能定位）。
+16. **改了 `src/index.ts` 或宿主引用的 `src/lib/**` 必须整体重建**：`npm run build` 会同时跑宿主半与客户端半；
+    只跑 `build:client` 会让 profile 继续加载旧宿主（本机 `lib/index.js` 就比 `lib/client.js` 旧）。
+17. **弹层滚动条被全局隐藏**（`scrollbar-width:none`），内容超出时没有可见滚动提示。
+18. **非 web 平台只有宿主半可用**：客户端声明 `platform: 'web'`，依赖 `createImageBitmap` / `canvas` /
+    `localStorage` / `document.createRange`；headless/sdk 场景没有 UI。
+
+## 九、变更记录
+
+以下为历史记录，条目按时间倒序保留原文（**注意 v0.3.0 一节里的「模型/思考强度可在设置里覆盖」
+已被 v0.3.1 的宿主策略单点取代**，勿照该节配置）。
 
 ## v0.5.1 — 「预存命令」弹窗控件 UI 精致化（2026-09-24）
 
@@ -94,13 +290,6 @@ npm test                                         # node --test 全量（v0.3.0�
 - 纯函数：`src/lib/optimize.ts`（模型/思考归一化、extractJSON、解析、重试判定、提示词、图片 payload 校验）、`src/lib/images.ts`（预处理决策）、`src/lib/interaction.ts`（常驻 toast 状态机）。
 - 门禁：`test/host-optimize.test.mjs`（host 产物接线）、`test/client-optimize.test.mjs`（client bundle 接线）、`test/optimize.test.mjs`（19 例）、`test/images.test.mjs`（9 例）、`test/interaction.test.mjs`（含常驻 toast 状态机）。
 
-## 构建与注入
-
-```bash
-DSH_CHECKOUT=<checkout> bash scripts/build.sh
-# 注入器环境内：dev_inject_plugin <本目录>
-```
-
 ## 解析中交互（v0.1.0）
 
 「LLM优化」开启时，最近一次解析任务运行期间（请求已发出未返回/流式未结束），按钮交互如下：
@@ -113,15 +302,8 @@ DSH_CHECKOUT=<checkout> bash scripts/build.sh
 
 判定与去重逻辑为纯函数（`src/lib/interaction.ts`，11 例单测覆盖状态/手势/去重/过期边界）。
 
-## 规范上下文缓存（spec-context）
+## 十、依赖与许可
 
-点击「追加」时，host 端把项目全部约束性规范文档合并为上下文（`src/lib/spec-context.ts`）：
-
-- **范围**：项目根 5 份规范（README / plugin-design-spec-template / PLUGIN-LOADER-SPEC / CANVAS-INTERACTION-SPEC / JSON-CSS-SPEC）+ `docs/` 全部文档 + 各插件目录 SPEC/README/DESIGN；
-- **缓存**：`~/.dsh/dsh-quick-append/spec-cache/<cwd-hash>/`（manifest.json + spec-context.cache gzip），不写入源仓库；
-- **增量**：各源 mtime/size 与 manifest 比对，全部未变 + 内容哈希一致 → 直接读缓存；任一变化/损坏 → 原子重建；
-- **净化**：标题级剔除「更新日志/变更记录/操作日志/运行摘要/验收清单/路线图」等非约束章节，保留规则条款与全部关键标识（ID、令牌、事件名、z-index、白名单项）；
-- **预算**：`DEFAULT_BUDGET_CHARS=240000`（≈60k token 安全档），超限按「整文件优先保留」（根规范 > docs > 插件目录）裁剪并标注省略清单；
-- 缓存失效自动回退全量，不抛错；上下文头含「本次载入规范清单：文件 + mtime + 缓存标记」。
-
-单测：`npm test`（node --test test/，纯函数/无 DOM）。
+- peerDependencies：`cordis`、`schemastery`、`@deepseek-ai/dsh-tools`、`@deepseek-ai/dsh-llm`、
+  `@deepseek-ai/dsh-client-ui-slots`、`@deepseek-ai/dsh-client-ui-conversation`、`react`、`react-dom`。
+- 许可：`BSD-3-Clause`（`package.json`）。

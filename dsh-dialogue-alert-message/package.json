@@ -1,7 +1,7 @@
 {
   "name": "@dsh-external/dsh-dialogue-alert-message",
-  "version": "0.1.1",
-  "description": "Monitor DSH dialogue execution states, play completion/error sounds, and show DeepSeek account usage (count/today cost/balance)",
+  "version": "0.2.1",
+  "description": "Monitor DSH dialogue execution states, alert on forced interruptions (tool error / forced cancel / session eviction / host restart) with per-level sounds, and show DeepSeek account usage (count/today cost/balance)",
   "private": true,
   "type": "module",
   "main": "./lib/index.js",
