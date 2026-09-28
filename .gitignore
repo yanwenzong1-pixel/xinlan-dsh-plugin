@@ -15,3 +15,31 @@ Thumbs.db
 *.tmp
 *.tsbuildinfo
 temp/
+
+# Python / 虚拟环境
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 本地草稿与实验（不进仓库）
+scratch/
+
+# 日志与运行产物
+*.log
+
+# 凭据与本机配置（绝不入库）
+.env
+.env.*
+config/local/
+*.zstd
+*.db
+*.sqlite*
+
+# 第三方项目 / 外部仓库克隆（非本项目代码，不随仓库分发）
+awesome-dsh-plugin/
+ponytail-main/
+
+# 内部运维文档（含域名与服务器信息，不公开）
+nginx 修复提示词.md
