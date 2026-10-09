@@ -133,13 +133,18 @@ test('classifySeed: 剥离 firstLiveSeq 边界与 end-seed 标记后仍正确分
       { type: 'session/end-seed', data: {} },
     ],
   }), null)
-  // 崩溃收尾种子 + end-seed + 后续 live 事件（firstLiveSeq 切开）→ 仍报警
+  // 崩溃收尾种子 + 连续两个 end-seed 标记 + 后续 live 事件（firstLiveSeq 切开）→ 仍报警
+  // 契约：firstLiveSeq = 首个 live 事件的下标（种子 = events.slice(0, firstLiveSeq)）。
+  // 要让 live 事件落在切分线之后，它就必须位于 events[firstLiveSeq]；原夹具把 firstLiveSeq
+  // 写成 events.length，等于"没有 live 事件"，种子尾部成了 user/message ⇒ 按契约返回 null
+  // （src/lib/interruption.ts:151 只认开放轮 / 崩溃收尾），断言必然拿不到 host-restart。
   const ev = classifySeed({
     id: 's-10',
     firstLiveSeq: 4,
     events: [
       { type: 'turn/start', data: { turn: 3 } },
       { type: 'turn/end', data: { turn: 3, reason: { kind: 'interrupted' } } },
+      { type: 'session/end-seed', data: {} },
       { type: 'session/end-seed', data: {} },
       { type: 'user/message', data: { kind: 'user' } },
     ],

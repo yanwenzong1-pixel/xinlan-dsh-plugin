@@ -5,13 +5,26 @@
  * 覆盖铁律 5（apply 兜底）不冒泡。
  * 运行：node --test test/
  */
-import test from 'node:test'
+import test, { afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtempSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const built = await import(new URL('../lib/index.js', import.meta.url).href)
+
+/**
+ * 每个 makeCtx 都登记在这里，由 afterEach 统一释放。
+ * 为什么必须有：apply 会注册余额刷新 interval（src/index.ts:605），用例忘记 dispose
+ * 时事件循环不空 —— 断言全部通过，node --test 进程却永远不退出（历史现象：60s 未结束）。
+ */
+const liveCtxs = []
+afterEach(() => {
+  while (liveCtxs.length > 0) {
+    const ctx = liveCtxs.pop()
+    try { ctx.dispose() } catch { /* 释放失败不改变用例结论 */ }
+  }
+})
 
 function makeCtx(overrides = {}) {
   const listeners = new Map()
@@ -54,16 +67,24 @@ function makeCtx(overrides = {}) {
     },
     sessions: { list: () => [] },
   }
+  // 日志内容要能被断言：logger.warn 是函数（(...a) => 的 length 恒为 0），断言必须取数组。
+  ctx.logs = logs
   ctx.emitListeners = (type, ...args) => {
     for (const { handler } of listeners.get(type) ?? []) handler(...args)
   }
   ctx.getRoute = (path) => routes.get(path)
   ctx.emitFlow = { awaitTick: (ms = 60) => new Promise(r => setTimeout(r, ms)) }
+  let disposed = false
   ctx.dispose = () => {
+    // 幂等：afterEach 兜底释放与用例内显式释放会各调一次；重复执行不得二次落盘、二次清定时器。
+    if (disposed) return
+    disposed = true
     for (const e of effects) {
       try { e.disposer?.() } catch { /* ignore */ }
     }
   }
+  // 登记到 afterEach 释放清单：apply 注册的 interval 不释放会拖住 node --test 进程
+  liveCtxs.push(ctx)
   return ctx
 }
 
@@ -134,7 +155,9 @@ test('host apply: 事件管线计价/计次/幂等/顶层过滤 + /api/usage + �
     const second = getJson(usageRoute)
     assert.equal(second.body.data.balance, 88.5)
 
-    // 持久化已写盘
+    // 持久化已写盘：queuePersist 有 500ms 防抖（src/index.ts:307-313），必须等过窗口再断言，
+    // 只等一个 60ms tick 只会读到"还没写"。
+    await ctx.emitFlow.awaitTick(700)
     assert.ok(existsSync(statsFile))
     const persisted = JSON.parse(readFileSync(statsFile, 'utf8'))
     assert.equal(persisted.dialogueCount, 2)
@@ -155,28 +178,36 @@ test('host apply: 余额失败降级（保留上次缓存 + warn 日志 + 界面
   const statsFile = join(dir, 'stats.json')
   const realFetch = globalThis.fetch
   let fail = false
+  const realNow = Date.now
+  let nowSkew = 0
+  Date.now = () => realNow() + nowSkew
   globalThis.fetch = async () => {
     if (fail) throw new Error('network down')
     return { ok: true, json: async () => ({ is_available: true, balance_infos: [{ currency: 'CNY', total_balance: '88.50' }] }) }
   }
   try {
     const ctx = makeCtx()
-    built.apply(ctx, built.Config({ statsFile }))
+    // 节流窗压到下限（Config 钳制 min 1000），再用时钟前移越过它 —— 不真等 30s
+    built.apply(ctx, built.Config({ statsFile, balanceMinIntervalMs: 1_000 }))
     const usageRoute = ctx.getRoute('/@dsh-external/dsh-dialogue-alert-message/api/usage')
     await ctx.emitFlow.awaitTick()
     assert.equal(getJson(usageRoute).body.data.balance, 88.5)
 
     fail = true
-    // 触发下一次刷新：绕过节流 → 直接 emit 一个完成轮（节流 30s 内不刷）→ 等待
+    // 触发下一次刷新：顶层完成轮会调 refreshBalance（src/index.ts:409-416），
+    // 但首次成功落在节流窗内 ⇒ 先把时钟推过 balanceMinIntervalMs，否则这次刷新被静默丢弃。
+    nowSkew = 2_000
     const sess = makeSession('session-9')
     ctx.emitListeners('session/event', sess, { type: 'turn/end', time: Date.now(), data: { turn: 1, reason: { kind: 'completed' } } })
     await ctx.emitFlow.awaitTick(150)
     const after = getJson(usageRoute)
     assert.equal(after.body.ok, true) // 不因失败崩 API
     assert.equal(after.body.data.balance, 88.5) // 保留上次成功值
-    assert.ok(ctx.logger.warn.length > 0, '失败已记录日志')
+    // 断言日志数组，而不是 ctx.logger.warn.length（函数的 length = 形参个数，(...a) => 恒为 0）
+    assert.ok(ctx.logs.warn.length > 0, '失败已记录日志')
   } finally {
     globalThis.fetch = realFetch
+    Date.now = realNow
   }
 })
 
@@ -191,8 +222,9 @@ test('host apply: 无 credentials seam 时回退环境变量', async () => {
     assert.equal(init.headers.authorization, 'Bearer sk-env-fallback')
     return { ok: true, json: async () => ({ is_available: true, balance_infos: [{ currency: 'CNY', total_balance: '10.00' }] }) }
   }
+  let ctx
   try {
-    const ctx = makeCtx({ credentials: false })
+    ctx = makeCtx({ credentials: false })
     built.apply(ctx, built.Config({ statsFile }))
     const usageRoute = ctx.getRoute('/@dsh-external/dsh-dialogue-alert-message/api/usage')
     await ctx.emitFlow.awaitTick()

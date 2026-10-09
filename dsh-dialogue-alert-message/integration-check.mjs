@@ -244,18 +244,21 @@ const realFetch = globalThis.fetch
   }
 
   // 门控：全局静音 → 新中断不发声但日志留痕 mutedBy；恢复后新中断可再次报警
-  assert(postJson(alarmSettings, { muteAll: true }).body.data.muteAll === true, 'POST muteAll 生效并 clamp')
+  assert((await postJson(alarmSettings, { muteAll: true })).body.data.muteAll === true, 'POST muteAll 生效并 clamp')
   ctx.emit('session/event', top, { type: 'turn/end', time: Date.now(), data: { turn: 5, reason: { kind: 'error', error: { message: 'x', code: 'Y' } } } })
   assert(getJson(alarmApi).items.length === 3, '静音期间不新增内部通知')
   const logAfterMute = String(readFileSync(alarmLogFile, 'utf8')).trim().split('\n').map(l => JSON.parse(l))
   assert(logAfterMute.some(l => l.mutedBy === 'muteAll'), '静音过滤日志留痕')
-  assert(postJson(alarmSettings, { muteAll: false }).body.data.muteAll === false, '解除静音')
+  assert((await postJson(alarmSettings, { muteAll: false })).body.data.muteAll === false, '解除静音')
   ctx.emit('session/event', top, { type: 'turn/end', time: Date.now(), data: { turn: 6, reason: { kind: 'error', error: { message: 'y', code: 'Z' } } } })
   assert(getJson(alarmApi).items.length === 4, '解除静音后新中断可再次报警')
 
   // ack 清除
   const ids = getJson(alarmApi).items.map(i => i.id)
-  assert(postJson(alarmApi, { ids }).body.ok === true, 'ack ok')
+  // ack 是独立 exact 路由 /api/alarm/ack（src/index.ts:537-538）；历史教训：错发到 /api/alarm
+  // 会拿到 items 而不是 ack 回执，ack 永不成功。
+  const alarmAck = ctx.route('/@dsh-external/dsh-dialogue-alert-message/api/alarm/ack')
+  assert((await postJson(alarmAck, { ids })).body.ok === true, 'ack ok')
   assert(getJson(alarmApi).items.length === 0, 'ack 后队列清空')
   ctx.dispose()
   console.log('[4] 场景4 PASS：三类中断/去重/静默过滤/日志/ack/自包含内部发声')
