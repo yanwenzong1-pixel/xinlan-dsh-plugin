@@ -131,10 +131,14 @@ docs/                        设计与迭代记录（含界面截图与踩坑过
 ```powershell
 cd dsh-quick-append
 $env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"   # 或给 build.ps1 传 -Checkout
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
+npm run build     # build.ps1：建 junction → tsc 编译宿主半 → tsdown 打包客户端半
 npm test          # node --test
-npm run typecheck # tsc -p tsconfig.json --noEmit
+
+# typecheck：仓库不在本地装 tsc，直接用 checkout 里的那个
+& "$env:DSH_CHECKOUT\node_modules\.bin\tsc.cmd" -p tsconfig.json --noEmit
 ```
+
+> `npm run typecheck` 需要 PATH 上有 `tsc`（仓库不随包安装），没有就走上面那条命令。
 
 ## 搜索关键词 / Keywords
 

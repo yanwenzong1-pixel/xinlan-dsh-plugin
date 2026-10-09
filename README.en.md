@@ -131,10 +131,14 @@ Fixed files inside each plugin directory:
 ```powershell
 cd dsh-quick-append
 $env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"   # or pass -Checkout to build.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
+npm run build     # build.ps1: link junctions → tsc for the host half → tsdown for the client half
 npm test          # node --test
-npm run typecheck # tsc -p tsconfig.json --noEmit
+
+# typecheck: no local tsc is installed, use the one from the checkout
+& "$env:DSH_CHECKOUT\node_modules\.bin\tsc.cmd" -p tsconfig.json --noEmit
 ```
+
+> `npm run typecheck` needs `tsc` on PATH (the repo does not install one); use the command above instead.
 
 ## Keywords
 
