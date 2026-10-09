@@ -50,6 +50,15 @@ DSH 输入区（composer）右侧的两个工具按钮：
 
 请求字段固定为 `['draft','context','cwd','images']`（`optimize.ts:34`），只接受这四个。
 
+优化所读的上下文（除草稿本身）：
+
+- **项目说明文档**：`src/index.ts:145` → `loadSpecContext(cwd)`，范围与净化规则见 §二.3。
+- **最近 3 轮对话**：客户端 `buildRecentContext` 取最近 6 条 user/assistant 消息（`src/client/index.ts:915-927`）。
+
+![快速追加文案弹窗：LLM 优化 / goal 模式 开关](../docs/176-quick-append-快速追加文案弹窗-LLM优化.png)
+
+> 编辑弹窗里的「LLM 优化」「goal 模式」开关；goal 模式开启时追加会在草稿前插入 `/goal`（`src/client/index.ts:1482`、`:1529`）。
+
 ### 2. 图片（多模态）
 
 - 输入区当前图片（顺序）与正文合并进**同一条 user 消息**；客户端传 base64，宿主经

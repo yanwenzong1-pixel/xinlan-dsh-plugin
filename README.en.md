@@ -15,7 +15,7 @@
 
 | Your daily pain | Plugin | After installing |
 | --- | --- | --- |
-| Retyping the same prompt or the same command over and over | ⚡ **Quick Append** | One click appends your stored text to the draft; a drop-up menu inserts stored commands. **Isolated per workspace**, right-click to edit |
+| Retyping the same prompt or the same command over and over | ⚡ **Quick Append** | One click appends stored text/commands, **isolated per workspace**; with **LLM optimize** it also reads your project docs + the last 3 turns and turns a rough draft into a precise request |
 | Handing a whole job to a subagent, but the intermediate output floods your context | 🧩 **PTC Task** | The subagent runs in PTC (code) mode: it writes one program, keeps the intermediate output inside it, and returns **only the path to the result** |
 | Long runs die or overspend, and you notice afterwards | 🔔 **Dialogue Alert** | Forced interruptions ring immediately, by severity; the sidebar also shows DeepSeek conversation count / today's cost / balance |
 
@@ -78,9 +78,24 @@ Then run `pnpm install` once inside that profile directory and restart dsh web.
 
 ### ⚡ Quick Append · [details](dsh-quick-append/README.md)
 
+**🔥 Flagship feature: LLM optimize — turns a one-line draft into a request you can start working from**
+
+With "LLM optimize" on, clicking the lightning button is **not "appending a few words"**: the host-side LLM first reads your **project documentation** and the **last 3 conversation turns**, then expands the prompt and fills in the missing detail. Author's own measurement: **much lower effort to get work started; prompt precision improves several-fold and ambiguity drops sharply.**
+
+The optimise context has three parts (each with a code anchor — no black box):
+
+| Context | What goes in | Evidence |
+| --- | --- | --- |
+| Your draft | Whatever is in the composer (images included, sent as one multimodal message) | Fixed request fields `['draft','context','cwd','images']`, `src/lib/optimize.ts` |
+| **Project documentation** | The 5 root specs (`README.md` + 4 SPEC files), every document under `docs/`, and each plugin's `SPEC/README/DESIGN`; non-binding sections (changelog / revision log / acceptance list / roadmap) are stripped by heading; incremental cache, rebuilt only when sources change, **never written into your repo** | `src/index.ts:145` → `loadSpecContext(cwd)`; `src/lib/spec-context.ts:19-41` |
+| **Last 3 turns** | The most recent 6 user/assistant messages, so a job already in progress is understood correctly | `src/client/index.ts:915-927` |
+
+![Quick append text dialog: LLM optimize / goal mode toggles](docs/176-quick-append-快速追加文案弹窗-LLM优化.png)
+
 - Two buttons on the right of the composer: **lightning** appends the current workspace's stored text; **wrench** opens a drop-up menu of stored commands (left-click inserts, right-click manages).
 - Stored text is **isolated per workspace** and persisted — switching projects switches your presets, with no cross-contamination.
-- With "LLM optimize" on, the left-click first sends your draft to the host-side LLM (images supported) and appends the preset text after the optimised result.
+- Right-click the lightning button for the **editor dialog** (screenshot above): write the stored text, tick "LLM optimize" / "goal mode", click "insert default text".
+- **goal mode** (on by default): prepends `/goal` to the draft, handing it to DSH as a goal rather than a plain prompt.
 - Shortcut: `Shift+Alt+F` while the composer is focused does what the lightning button does; both buttons are Tab-reachable and `Shift+F10` opens the context menu.
 
 ### 🧩 PTC Task · [details](dsh-ptc-task/README.md)
