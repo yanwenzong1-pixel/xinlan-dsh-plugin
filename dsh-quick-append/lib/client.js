@@ -375,6 +375,22 @@ window.__ModuleLoader__.load({
 		const COMMAND_CONTENT_MAX = 2e3;
 		/** 删除二次确认的有效窗口（毫秒）：窗口内再点同一个「确认删除」才真的删。 */
 		const DELETE_CONFIRM_MS = 4e3;
+		/**
+		* 列表溢出时的可见提示。滚动条按规范 `ct-scrollbar-hidden` 是**隐藏**的，
+		* 所以"还能往下滚"必须有文字兜底 —— 否则 8 条以上时用户只会看到"少了几条"。
+		*/
+		const COMMAND_MENU_OVERFLOW_HINT = "滚动查看更多";
+		/**
+		* 面板可用高度上限 = min(预算, 视口高 − 2×安全边距)，并不低于 {@link COMMAND_MENU_MIN_HEIGHT}。
+		* 视口高非法（非有限正数）时回落到预算 —— 宁可高一点，也不要算出 0 让面板塌掉。
+		* @param viewportHeight - window.innerHeight 之类的视口高度
+		* @returns 面板 max-height 像素值
+		*/
+		function menuPanelMaxHeightOf(viewportHeight) {
+			const vh = typeof viewportHeight === "number" && Number.isFinite(viewportHeight) && viewportHeight > 0 ? Math.floor(viewportHeight) : 0;
+			if (vh === 0) return 344;
+			return Math.max(140, Math.min(344, vh - 10));
+		}
 		/** 空态引导（需求 3.4 原文）：不展示空菜单，改为 toast 引导到右键录入路径。 */
 		const COMMAND_EMPTY_TOAST = "暂无预存命令，右键『预存命令』可录入指令";
 		const COMMAND_SAVED_TEXT = "预存命令已保存";
@@ -1030,6 +1046,11 @@ window.__ModuleLoader__.load({
   min-width: 132px;
   padding: 6px;
   border-radius: 10px;
+  /* 卡片必须**装下**自己的内容（2026-10-04）：flex 列 + overflow hidden ⇒ 头/列表/底部提示
+     三者只能靠列表滚动来分配空间，绝不再把最后一行画到卡片外面去。 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 /* 面板头部（菜单与弹窗共用一套）：标题左、计数右，底部 1px 分割线（骨架规范）。
    用 padding-bottom 长写法，两处的"底部 10px"是同一个声明来源。 */
@@ -1040,10 +1061,14 @@ window.__ModuleLoader__.load({
   gap: 8px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--al-border, rgba(120,140,170,0.18));
+  /* 头部是固定开销：空间不足时先让列表缩（2026-10-04，同一缺陷类）。 */
+  flex: none;
 }
 /* 菜单头在小面板里需要左右内边距（弹窗头由弹窗自身的 padding 提供）。 */
 .dsh-qa-menu-head {
   padding: 4px 8px 10px;
+  /* 头部与底部提示行都不参与收缩：空间不够时只许列表滚动（2026-10-04）。 */
+  flex: none;
 }
 .dsh-qa-head-title {
   flex: 1 1 auto;
@@ -1065,7 +1090,11 @@ window.__ModuleLoader__.load({
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 240px;
+  /* 唯一滚动区（2026-10-04）：高度由面板预算**减去**头/尾/内边距后剩下的空间决定，
+     所以这里不再写死 max-height（旧值 240 正是"面板 260 装不下 324"的成因之一）。
+     min-height: 0 是 flex 子项能真正收缩的前提；flex: 1 1 auto 让它吃掉剩余空间。 */
+  flex: 1 1 auto;
+  min-height: 0;
   margin-top: 6px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1092,6 +1121,8 @@ window.__ModuleLoader__.load({
   border: 1px solid transparent;
   border-radius: 7px;
   cursor: pointer;
+  /* 条目不许被压扁（2026-10-04）：内容超高时必须是"能滚"，而不是把每条挤成半行。 */
+  flex: none;
   transition: background .15s, color .15s;
   /* 标题过长省略号截断（需求 3.2）；完整标题由 title 属性兜底 */
   overflow: hidden;
@@ -1107,11 +1138,20 @@ window.__ModuleLoader__.load({
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: none;
   margin-top: 6px;
   padding: 8px 4px 2px;
   border-top: 1px solid var(--al-border, rgba(120,140,170,0.18));
   font-size: 11px;
   color: var(--al-text3, #606B7C);
+}
+/* 溢出提示（滚动条按规范隐藏 ⇒ 必须有文字兜底）：紧贴底部提示行右侧，弱化色不抢主操作。 */
+.dsh-qa-menu-more {
+  flex: none;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--al-text3, #606B7C);
+  white-space: nowrap;
 }
 /* 编辑弹窗面板：同一卡面 + 更高层级（111 必须 > 遮罩 110，否则第一下点在遮罩上）。
    骨架按 sp-window-skeleton：头部（标题/计数 + 1px 分割线）→ 内容区 → 底部操作行；
@@ -1122,26 +1162,41 @@ window.__ModuleLoader__.load({
   bottom: auto;
   z-index: 111;
   padding: 14px 16px;
-  overflow-y: auto;
+  /* 卡片装下内容（2026-10-04 第二轮，同一缺陷类）：flex 列 + 裁边 ⇒ 滚动只落在内容区/列表上，
+     底部操作行永远贴在卡片底部。旧实现让**整窗**滚动，视口高 ≤500 时按钮被推出可视区、≤460 直接点不到。 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   overscroll-behavior: contain;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
 }
-.dsh-qa-dialog::-webkit-scrollbar {
-  display: none;
-}
-/* 内容区分组节奏：列表 → 表单 → （可选）确认行，组间距 10px（8px 栅格）。 */
+/* 内容区分组节奏：列表 → 表单 → （可选）确认行，组间距 10px（8px 栅格）。
+   同时它还是**安全阀滚动区**：正常情况下列表吃掉剩余空间、这里不滚；
+   只有"表单 + 列表最小高度"都塞不下（极矮视口）时才由这里滚动，保证底部操作行始终可见可点。 */
 .dsh-qa-body {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding-top: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.dsh-qa-body::-webkit-scrollbar {
+  display: none;
 }
 .dsh-qa-cmd-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 150px;
+  /* 首选滚动区（2026-10-04 第二轮）：高度由弹窗预算减去头部/表单/底部操作行后决定，
+     所以不再写死 max-height（旧值 150 会把增量转嫁给"整窗滚动"）。
+     min-height 按**恰好一行**（实测行高 43px）留底：保证极矮视口下列表仍露出至少一行，
+     空间再不够就交给 .dsh-qa-body 兜底滚动；1 条时也不产生多余空白（44 ≈ 自然高 43）。 */
+  flex: 1 1 auto;
+  min-height: 44px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -1156,6 +1211,8 @@ window.__ModuleLoader__.load({
   align-items: center;
   gap: 8px;
   min-width: 0;
+  /* 条数多时是滚动，不是把每行压扁（同一缺陷类，2026-10-04）。 */
+  flex: none;
   padding: 5px 6px;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -1200,6 +1257,8 @@ window.__ModuleLoader__.load({
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* 表单是固定开销：空间不足时先让列表缩，绝不把底部操作行挤出去。 */
+  flex: none;
 }
 .dsh-qa-field {
   display: flex;
@@ -1265,6 +1324,8 @@ window.__ModuleLoader__.load({
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--al-border, rgba(120,140,170,0.18));
+  /* 底部操作行不参与收缩/滚动（2026-10-04 第二轮）：它是弹窗的固定底座。 */
+  flex: none;
 }
 .dsh-qa-dialog .dsh-qa-footer .dsh-qa-meta-text {
   font-size: 11px;
@@ -1515,6 +1576,8 @@ window.__ModuleLoader__.load({
 			const [menuOpen, setMenuOpen] = (0, react.useState)(false);
 			const [menuLine, setMenuLine] = (0, react.useState)(null);
 			const [menuActive, setMenuActive] = (0, react.useState)(0);
+			/** 列表是否溢出（滚动条按规范隐藏 ⇒ 溢出必须另有文字提示）。菜单打开后实测一次。 */
+			const [menuListOverflow, setMenuListOverflow] = (0, react.useState)(false);
 			const [commandDialogOpen, setCommandDialogOpen] = (0, react.useState)(false);
 			const [dialogPlacement, setDialogPlacement] = (0, react.useState)(null);
 			const [commandDraft, setCommandDraft] = (0, react.useState)({
@@ -1674,7 +1737,7 @@ window.__ModuleLoader__.load({
 						height: box.height
 					},
 					panelWidth: 320,
-					panelHeight: 260,
+					panelHeight: 344,
 					viewport: {
 						width: window.innerWidth,
 						height: window.innerHeight
@@ -1908,6 +1971,20 @@ window.__ModuleLoader__.load({
 					window.removeEventListener("resize", onViewportChange);
 				};
 			}, [menuOpen, closeCommandMenu]);
+			/**
+			* 列表溢出探测（2026-10-04）：滚动条按 `ct-scrollbar-hidden` 是隐藏的，
+			* 所以"还能往下滚"只能靠实测 `scrollHeight > clientHeight` 再用文字提示，
+			* 否则 8 条以上时用户只会看到"少了几条"（用户现场就是这样丢掉第 7 条的）。
+			* 依赖带 commandRevision：增删命令后条数变了要重新判定。
+			*/
+			(0, react.useEffect)(() => {
+				if (!menuOpen) {
+					setMenuListOverflow(false);
+					return;
+				}
+				const list = menuLayerRef.current?.querySelector(".dsh-qa-menu-list") ?? null;
+				setMenuListOverflow(list !== null && list.scrollHeight > list.clientHeight + 1);
+			}, [menuOpen, commandRevision]);
 			(0, react.useEffect)(() => {
 				if (!commandDialogOpen) return;
 				const onKeyDown = (event) => {
@@ -2143,7 +2220,7 @@ window.__ModuleLoader__.load({
 				className: "dsh-qa-popover dsh-qa-menu",
 				role: "menu",
 				"aria-label": COMMAND_LABEL,
-				style: layerStyleOf(menuLine, 320, 260)
+				style: layerStyleOf(menuLine, 320, menuPanelMaxHeightOf(window.innerHeight))
 			}, (0, react.createElement)("div", { className: "dsh-qa-menu-head" }, (0, react.createElement)("span", { className: "dsh-qa-head-title" }, COMMAND_LABEL), (0, react.createElement)("span", { className: "dsh-qa-head-count" }, String(commandList.length) + " 条")), (0, react.createElement)("div", { className: "dsh-qa-menu-list" }, commandList.map((command, index) => (0, react.createElement)("button", {
 				key: command.id,
 				type: "button",
@@ -2153,7 +2230,7 @@ window.__ModuleLoader__.load({
 				className: "dsh-qa-menu-item" + (index === menuActive ? " on" : ""),
 				onMouseEnter: () => setMenuActive(index),
 				onClick: () => selectCommand(command)
-			}, command.title))), (0, react.createElement)("div", { className: "dsh-qa-menu-foot" }, (0, react.createElement)("span", { className: "dsh-qa-meta-text" }, "左键插入正文 · 右键录入/编辑"), (0, react.createElement)("button", {
+			}, command.title))), (0, react.createElement)("div", { className: "dsh-qa-menu-foot" }, (0, react.createElement)("span", { className: "dsh-qa-meta-text" }, "左键插入正文 · 右键录入/编辑"), menuListOverflow ? (0, react.createElement)("span", { className: "dsh-qa-menu-more" }, COMMAND_MENU_OVERFLOW_HINT) : null, (0, react.createElement)("button", {
 				type: "button",
 				className: "dsh-qa-btn",
 				onClick: openCommandDialog

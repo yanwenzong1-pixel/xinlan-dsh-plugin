@@ -7,7 +7,7 @@ DSH 输入区（composer）右侧的两个工具按钮：
 
 「LLM优化」打开时，左键会先把草稿交给宿主侧的 LLM 优化（可带图片），再把追加文案接在优化结果之后。
 
-- 当前版本：`0.5.1`（`package.json`）
+- 当前版本：`0.5.2`（`package.json`）
 - 形态：宿主半 `src/index.ts`（提供 `/@dsh-external/dsh-quick-append/api` 与 `/api/optimize`）+
   客户端半 `src/client/index.ts`（插槽 `conversation.input.right`，`order: 10`）
 - 宿主注入：`['webServer', 'llm', 'attachments']`（`src/index.ts:37`）；客户端注入 `['slots']`，
@@ -128,14 +128,27 @@ DSH 输入区（composer）右侧的两个工具按钮：
 ## 七、构建与测试
 
 ```powershell
+$env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"   # 或给 build.ps1 传 -Checkout
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1   # npm run build
-            -Checkout "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"          # 必须传真实 checkout（见下）
 npm run typecheck                                                       # tsc -p tsconfig.json --noEmit
 npm test                                                                # node --test
 ```
 
 > ⚠️ 构建脚本调的是 **Windows PowerShell**（`package.json:34`），不是 `pwsh`；`scripts/` 下**没有** `build.sh`。
-> `-Checkout` 的默认值是脱敏占位路径 `C:\Users\<user>\...`，**不传参直接 `npm run build` 会在第 24 行抛「checkout 不可用」**。
+> `-Checkout` 默认取 **`$env:DSH_CHECKOUT`**（2026-10-04 起不再写死本机路径）；两者都没有时脚本明确报错
+> 「未提供 dsh checkout」，而不是去猜路径。
+
+**本仓库不写死任何本机绝对路径**（2026-10-04 起）。需要外部环境的三处一律走环境变量，缺了就报错/跳过，
+不静默兜底：
+
+| 环境变量 | 用途 | 缺失时行为 |
+|---|---|---|
+| `DSH_CHECKOUT` | dsh 源码 checkout 根：`scripts/build.ps1 -Checkout` 的默认值、`test/shortcut-target.test.mjs` 读官方组件源码 | 构建脚本报错退出；该契约用例**显式 skip**（TAP 里可见 `skipped 1`，不伪装通过） |
+| `DSH_AUTH_HELPER` | `dsh-auth-cookie.mjs` 绝对路径（给浏览器上下文装 DSH 会话 cookie） | 两个真机脚本启动即报「缺少环境变量」 |
+| `PW_PATH` | `playwright/index.js` 绝对路径 | 同上 |
+
+**本机实测**（2026-10-04）：`node --test` → **240 例 / 240 通过 / 0 跳过**（设了 `DSH_CHECKOUT`）；
+不设 `DSH_CHECKOUT` 时为 **239 通过 / 1 跳过**（跳过的是那条跨仓契约用例，TAP 里明确标出）。
 
 `scripts/build.ps1` 先按精确 junction 链接构建依赖（cordis / schemastery / dsh-tools / dsh-llm /
 react / react-dom / dsh-client-ui-slots / dsh-client-ui-conversation / tsdown / @types/node），
@@ -146,16 +159,16 @@ react / react-dom / dsh-client-ui-slots / dsh-client-ui-conversation / tsdown / 
 
 **本机实测**（2026-09-28）：`node --test` → **231 例 / 230 通过 / 1 失败**。失败的是
 `test/shortcut-target.test.mjs:82` 契约用例 —— 它把官方源码路径写成了脱敏占位符
-`C:/Users/<user>/Documents/...`（第 85 行），实际文件不存在 ⇒ `ENOENT`。
-同类占位符还有 `scripts/build.ps1:15` 的 `-Checkout` 默认值与 `scripts/e2e-preset-commands.mjs:24-26`
-（后者可用 `PW_PATH` 环境变量覆盖 playwright 那一处）。**占位符是脱敏的产物，不是笔误**：
-要跑这些脚本/用例，需把 `<user>` / `<repo>` 换成本机真实用户名与仓库名（或改成从环境变量推导）。
+`C:/Users/<user>/Documents/...`，实际文件不存在 ⇒ `ENOENT`。**该问题已于 2026-10-04 修掉**：
+路径改走 `$DSH_CHECKOUT`，无该变量时显式 skip（见上一节的环境变量表）。
 
 真机端到端（需本机 DSH 环境，package.json 里没有对应 script，需手工执行）：
 
 ```powershell
+$env:DSH_AUTH_HELPER = "C:\...\dsh-auth-cookie.mjs"
+$env:PW_PATH         = "C:\...\playwright\index.js"
 node scripts/e2e-preset-workspace.mjs    # 追加文案按工作区隔离（20 项）
-node scripts/e2e-preset-commands.mjs     # 预存命令菜单/弹窗（60 项，含 computed style 实测）
+node scripts/e2e-preset-commands.mjs     # 预存命令菜单/弹窗（64 项，含 computed style 与几何实测）
 ```
 
 ## 八、注意事项与坑
@@ -199,6 +212,47 @@ node scripts/e2e-preset-commands.mjs     # 预存命令菜单/弹窗（60 项，
 
 以下为历史记录，条目按时间倒序保留原文（**注意 v0.3.0 一节里的「模型/思考强度可在设置里覆盖」
 已被 v0.3.1 的宿主策略单点取代**，勿照该节配置）。
+
+## v0.5.2 — 修复浮层溢出：菜单与编辑弹窗「装得下、够得着」（2026-10-04）
+
+**症状（用户现场）**：预存 7 条命令，左键上拉菜单只显示 6 条 —— 第 7 条看不到。
+
+**根因（真机实测，不是推断）**：面板高度预算 260px 小于实际内容高度。7 条时——
+
+- 内容需要 324px（头部 31 + 列表 236 + 底部提示 39 + 间距/内边距），面板却只有 260 ⇒
+  列表底边比面板底边**低 20px**（20 条时低 24px），最后一行被画到**卡片外**又被宿主下方元素盖住；
+- 底部提示行整体被挤出卡片（实测 `footVisible:false`）；
+- 7 条时列表 `scrollHeight == clientHeight`：条目被 flex 压扁塞进去，**连"滚一下"这条退路都不存在**；
+- 既有真机门禁 F21 只断言"列表能滚 + 高度受限"，从未断言"最后一条在卡片内可见" ⇒ 长期假绿。
+
+**修复**：
+
+1. 预算按**实测行高**重算：`面板自然高度 = 94 + (34×条数 − 2)`，7 条 = 330 ⇒ `COMMAND_MENU_HEIGHT` 由 260 调到 **344**（7 条不滚动，8 条起滚动）；
+2. 卡片改为 flex 列 + `overflow: hidden` ⇒ 内容只能靠列表滚动来分配，不再画到卡片外；
+3. 列表成为**唯一滚动区**（`flex: 1 1 auto; min-height: 0; overflow-y: auto`），**下线写死的 `max-height: 240px`**（它就是"面板 260 装不下 324"的成因之一）；
+4. 条目 `flex: none` ⇒ 内容超高时是"能滚"，而不是"挤成半行"；
+5. 新增 `menuPanelMaxHeightOf(视口高)`：上限 = min(预算, 视口 − 2×安全边距)，矮视口不再高过屏幕；
+6. 滚动条按规范隐藏 ⇒ 列表溢出时底部提示行显示「滚动查看更多」（`COMMAND_MENU_OVERFLOW_HINT`）。
+
+**同一缺陷类的第二处（右键编辑弹窗，同日第二轮）**：实测临界 **N₁ = 4 条**（列表开始内部滚动）；
+视口高 **≤530px** 时弹窗**整体**被迫滚动（滚动落在错误容器上），**≤500px** 底部操作行被推出可视区，
+**≤460px** 底部按钮直接**点不到**。修法与菜单同源：弹窗改 flex 列 + `overflow:hidden`；内容区
+`.dsh-qa-body` 作**安全阀**滚动区；列表 `.dsh-qa-cmd-list` 删掉写死的 `max-height:150px`、改 `flex:1 1 auto`
++ `min-height:44px` 作**首选**滚动区；行/头部/表单/底部操作行一律 `flex:none`。
+`docs/172-quick-append-菜单-7条全可见.png`、`173-quick-append-弹窗-短视口460-20条.png` 与
+`173-quick-append-弹窗-极矮340-4条.png` 为目视证据（短视口下底部操作行仍在弹窗内）。
+
+**连带修复**（脱敏把脚本改成 `<user>` 占位符导致跑不动）：`build.ps1 -Checkout` 默认值、
+两个真机脚本、`test/shortcut-target.test.mjs` 的官方源码路径一律改走
+`DSH_CHECKOUT` / `DSH_AUTH_HELPER` / `PW_PATH`，缺了就报错或显式 skip。
+
+**门禁**：新增 `test/command-menu-fit.test.mjs`（**14 例**：菜单 M1–M9 + 弹窗 D1–D5，先红后绿）；真机
+`e2e-preset-commands.mjs` 由 60 项扩到 **70 项**（重写 F21/G7 + 新增 F25/F25b/F26/F27/F28–F33，判据是
+"矩形是否落在容器内 + `elementFromPoint` 是否命中"，不再用 `scrollHeight` 猜）；`node --test`
+**245/245、0 skipped**；既有真机 20/20 无回归；`tsc` 0；产物门禁 2/2。
+验收矩阵 **45/45 PASS**（数据量 0/1/3/4/5/20/200/10000 × 视口 1280×1000…1000×340 × 缩放 100%/125%，
+Chromium 149）；万级 10000 条的弹窗**自身**渲染延迟实测 **0.5s**（无虚拟滚动，如实登记为"可感知"）。
+详见 `docs/171-quick-append-预存命令菜单装得下够得着-20261004.md`。
 
 ## v0.5.1 — 「预存命令」弹窗控件 UI 精致化（2026-09-24）
 

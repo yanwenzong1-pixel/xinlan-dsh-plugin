@@ -1,7 +1,7 @@
 {
   "name": "@dsh-external/dsh-quick-append",
-  "version": "0.5.1",
-  "description": "DSH composer quick append button with per-workspace preset text and stored commands (v0.5.1: command dialog/menu UI polished to the project design spec — spec mask, ct-button/ct-input/ct-menu-item recipes, head+footer dividers, violet selection; v0.5.0: second wrench button + drop-up command menu + command editor dialog, z 110/111 registered; v0.4.1: default append text updated to the user-specified revision — Ponytail full mode + generic root *.md specs; v0.4.0: append text isolated per workspace + persisted, legacy global key migrated, visible save-failure feedback)",
+  "version": "0.5.2",
+  "description": "DSH composer quick append button with per-workspace preset text and stored commands (v0.5.2: command menu now fits its content — height budget recomputed from measured row height, panel is a flex column that clips its own overflow, list is the single scroll region, plus a visible scroll hint; v0.5.1: command dialog/menu UI polished to the project design spec — spec mask, ct-button/ct-input/ct-menu-item recipes, head+footer dividers, violet selection; v0.5.0: second wrench button + drop-up command menu + command editor dialog, z 110/111 registered; v0.4.1: default append text updated to the user-specified revision — Ponytail full mode + generic root *.md specs; v0.4.0: append text isolated per workspace + persisted, legacy global key migrated, visible save-failure feedback)",
   "private": true,
   "type": "module",
   "main": "./lib/index.js",

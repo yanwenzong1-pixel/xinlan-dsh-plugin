@@ -50,8 +50,50 @@ export const COMMAND_LAYER = { menu: 110, mask: 110, dialog: 111 } as const
 
 /** 面板尺寸（单一来源：定位计算与内联样式共用，避免 CSS 与 JS 两处漂移）。 */
 export const COMMAND_MENU_WIDTH = 320
-/** 菜单高度**估算**：上拉用 bottom 锚定，视觉间距与真实高度无关；该值只用于判断"上方是否够放"。 */
-export const COMMAND_MENU_HEIGHT = 260
+/**
+ * 菜单面板高度**预算**（上拉用 bottom 锚定，视觉间距与真实高度无关；该值同时是面板的 max-height 上限）。
+ *
+ * 2026-10-04 真机事故：原值 260 只够 5 行 —— 7 条命令时面板装不下内容，最后一行被画到
+ * **卡片外**并被宿主元素盖住（用户现场："第 7 条看不到"），而旧门禁只断言"列表能滚"，
+ * 于是长期假绿。现按实测行高重算预算：
+ *   面板自然高度 = COMMAND_MENU_CHROME_PX + (COMMAND_MENU_ROW_PX × 条数 − 2)
+ *   7 条 = 94 + 236 = 330 ⇒ 取 344 让 **7 条无需滚动**（8 条起由列表滚动承接）。
+ */
+export const COMMAND_MENU_HEIGHT = 344
+/** 菜单行占位（条目实测 32px + 列表 gap 2px）；n 行合计 = 该值 × n − 2（首行前无间距）。 */
+export const COMMAND_MENU_ROW_PX = 34
+/** 列表之外的固定开销：面板 padding 12 + 头部 31 + 上间距 6 + 下间距 6 + 底部提示行 39。 */
+export const COMMAND_MENU_CHROME_PX = 94
+/** 面板高度下限：矮视口夹紧时至少留出头部 + 一行 + 底部提示（固定开销 82 < 140，故 head/foot 不会被挤掉）。 */
+export const COMMAND_MENU_MIN_HEIGHT = 140
+/**
+ * 列表溢出时的可见提示。滚动条按规范 `ct-scrollbar-hidden` 是**隐藏**的，
+ * 所以"还能往下滚"必须有文字兜底 —— 否则 8 条以上时用户只会看到"少了几条"。
+ */
+export const COMMAND_MENU_OVERFLOW_HINT = '滚动查看更多'
+
+/**
+ * 面板自然高度（未受视口限制时）。异常入参按 0 条处理，绝不返回 NaN。
+ * @param count - 命令条数（任意入参；非有限正数一律按 0 条）
+ * @returns 面板高度像素值，上限为 {@link COMMAND_MENU_HEIGHT}
+ */
+export function commandMenuPanelHeightFor(count: unknown): number {
+  const rows = typeof count === 'number' && Number.isFinite(count) && count > 0 ? Math.floor(count) : 0
+  const list = rows === 0 ? 0 : COMMAND_MENU_ROW_PX * rows - 2
+  return Math.min(COMMAND_MENU_CHROME_PX + list, COMMAND_MENU_HEIGHT)
+}
+
+/**
+ * 面板可用高度上限 = min(预算, 视口高 − 2×安全边距)，并不低于 {@link COMMAND_MENU_MIN_HEIGHT}。
+ * 视口高非法（非有限正数）时回落到预算 —— 宁可高一点，也不要算出 0 让面板塌掉。
+ * @param viewportHeight - window.innerHeight 之类的视口高度
+ * @returns 面板 max-height 像素值
+ */
+export function menuPanelMaxHeightOf(viewportHeight: unknown): number {
+  const vh = typeof viewportHeight === 'number' && Number.isFinite(viewportHeight) && viewportHeight > 0 ? Math.floor(viewportHeight) : 0
+  if (vh === 0) return COMMAND_MENU_HEIGHT
+  return Math.max(COMMAND_MENU_MIN_HEIGHT, Math.min(COMMAND_MENU_HEIGHT, vh - COMMAND_VIEWPORT_EDGE_PX * 2))
+}
 export const COMMAND_DIALOG_WIDTH = 380
 export const COMMAND_DIALOG_HEIGHT = 460
 

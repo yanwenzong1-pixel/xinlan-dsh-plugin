@@ -1,59 +1,145 @@
-# xinlan-dsh-plugin
+# DSH 扩展坞
 
-DSH（DeepSeek Harness）外部插件集合。每个插件是独立的 npm 包，通过自带的
-`cordis.patch.yml` 接入 DSH 宿主的 profile，构建产物（`lib/`）已随仓库提交，
-clone 后无需先行构建即可加载。
+**给 DeepSeek Harness（DSH）插上更多接口 —— 3 个开箱即用的插件，clone 完不用构建就能装。**
 
-## 插件
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-0.1.5--rc.1-4f46e5.svg)](#环境要求)
+[![无需构建](https://img.shields.io/badge/install-no%20build%20required-brightgreen.svg)](#快速上手约-1-分钟)
+[English](README.en.md) · 中文
 
-| 目录 | 包名 | 版本 | 一句话作用 |
-| --- | --- | --- | --- |
-| `dsh-quick-append/` | `@dsh-external/dsh-quick-append` | 0.5.1 | 输入框「快速追加」按钮，按工作区隔离的预存文案与预存命令 |
-| `dsh-dialogue-alert-message/` | `@dsh-external/dsh-dialogue-alert-message` | 0.1.1 | 对话执行状态监控与报警音，附 DeepSeek 账号用量显示 |
-| `dsh-ptc-task/` | `@dsh-external/dsh-ptc-task` | 0.1.0 | 把一整件事交给 PTC 作用域子代理执行的任务派发工具 |
+`DSH 插件` · `DeepSeek Harness` · `DeepSeek 外部插件` · `cordis patch bundle` · `AI Agent 提效` · `子代理任务派发`
 
-每个插件的**介绍、用法与注意事项**见其目录下的 `README.md`：
+---
 
-- [`dsh-quick-append/README.md`](dsh-quick-append/README.md)
-- [`dsh-dialogue-alert-message/README.md`](dsh-dialogue-alert-message/README.md)
-- [`dsh-ptc-task/README.md`](dsh-ptc-task/README.md)
+## 30 秒看懂它能干什么
+
+| 你每天的麻烦 | 插件 | 装上之后 |
+| --- | --- | --- |
+| 反复贴同一段提示词、同一串命令 | ⚡ **闪电追加** | 输入框右侧一键把预存文案接到草稿后；预存命令上拉菜单一键插入。**按工作区各存各的**，右键就能改 |
+| 想把一整件事丢给子代理，又受不了中间输出刷屏 | 🧩 **一键派活** | 子代理用 PTC（code）模式写一段程序跑完，中间输出留在程序里，**只把结论路径回给你** |
+| 长任务跑着跑着断了、花超了，事后才发现 | 🔔 **报警铃铛** | 被非主动原因中断立刻**分级响铃**；侧栏顺带显示 DeepSeek 对话数 / 当日花费 / 余额 |
+
+三个插件都只在 DSH 侧加载，不改 DSH 源码、不碰你的会话数据。
+
+## 快速上手（约 1 分钟）
+
+```bash
+git clone https://github.com/yanwenzong1-pixel/xinlan-dsh-plugin.git
+cd xinlan-dsh-plugin
+
+dsh plugin --profile web add ./dsh-quick-append
+dsh plugin --profile web add ./dsh-ptc-task
+dsh plugin --profile web add ./dsh-dialogue-alert-message
+```
+
+重启 dsh web（或刷新页面）即可。装上「闪电追加」后，输入框右侧会多出 ⚡ 和 🔧 两个按钮。
+
+- `--profile web` 换成你自己的 profile 名（`web` / `headless` / 自定义）即可。
+- `dsh plugin … add` 会把插件装进 profile，并**自动把声明了 `dsh.bundle.patch` 的包登记进 `dsh.profile.bundles`**，不需要手改 JSON。
+- 卸载：`dsh plugin --profile web remove @dsh-external/dsh-quick-append`。
+- **不需要构建**：三个插件的 `lib/` 都已随仓库提交（`main` 直接指向 `lib/index.js`），clone 下来即可加载。
+
+<details>
+<summary>不想用 CLI？手改 profile（等价做法）</summary>
+
+编辑 `<DSH_HOME>/profiles/<name>/package.json`，把插件加进依赖与 bundles 层栈：
+
+```jsonc
+{
+  "dependencies": {
+    "@dsh-external/dsh-quick-append": "link:C:/绝对路径/dsh-quick-append"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [/* 内置 bundle… */, "@dsh-external/dsh-quick-append"]
+    }
+  }
+}
+```
+
+然后在该 profile 目录跑一次 `pnpm install`，再重启 dsh web。
+</details>
+
+## 界面
+
+| 预存命令菜单（7 条全可见） | 编辑弹窗（视口 460px，20 条可滚动） |
+| --- | --- |
+| ![预存命令菜单](docs/172-quick-append-菜单-7条全可见.png) | ![编辑弹窗](docs/173-quick-append-弹窗-短视口460-20条.png) |
+
+> 0.5.2 起，菜单与弹窗都按内容自适应高度、超长列表只有**一个**滚动区，并且装得下就不滚、装不下给滚动提示——不会再出现"列表被裁掉、最后几条点不到"。
+
+## 插件清单
+
+| 别名 | 目录 | 包名 | 版本 | 一句话 |
+| --- | --- | --- | --- | --- |
+| ⚡ 闪电追加 | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.2 | 输入框「快速追加」按钮 + 预存命令菜单与编辑弹窗 |
+| 🧩 一键派活 | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | 向宿主注册 `ptc_task` 工具，把整件事交给 PTC 作用域子代理 |
+| 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.1 | 对话中断分级报警 + 侧栏 DeepSeek 用量显示 |
+
+### ⚡ 闪电追加 · [详细说明](dsh-quick-append/README.md)
+
+- 输入框右侧两个按钮：**闪电** = 一键追加当前工作区的预存文案；**扳手** = 上拉菜单插入预存命令（左键插入，右键管理）。
+- 预存文案**按工作区隔离**并持久化：换项目自动换文案，不会互相污染。
+- 打开「LLM优化」时，左键会先把草稿交给宿主侧 LLM 润色/结构化（支持带图片），再把预存文案接在后面。
+- 快捷键：输入区聚焦时 `Shift+Alt+F` 等价于点闪电；两个按钮都可 Tab 聚焦，`Shift+F10` 打开右键菜单。
+
+### 🧩 一键派活 · [详细说明](dsh-ptc-task/README.md)
+
+- 注册 `ptc_task` 工具：给 `prompt`（自包含任务说明）和 `resultPath`（产出路径），子代理跑完把结果写进文件。
+- 子代理的**工具面以 PTC（code）模式呈现**，一段程序跑完多步操作，中间输出不进你的上下文；主会话工具面保持原生。
+- 三道护栏：链长恒 ≤ 1（子代理不能再派发）、递归护栏装不上就**拒发**（fail-closed）、并发去重 + 连续失败熔断。
+- 适合「步骤已确定」的批量活（逐项跑脚本、扫描、对账、汇总）；不适合需要边看中间结果再判断的探索型任务。
+
+### 🔔 报警铃铛 · [详细说明](dsh-dialogue-alert-message/README.md)
+
+- 对话正常完成播「叮咚」；被**非用户主动**原因中断时按等级播报警音（工具报错 / 强制取消 / 会话驱逐 / 宿主重启）。
+- 只对非主动中断报警：你按的取消不会响。
+- 侧栏状态栏显示 DeepSeek 账号用量：对话数 / 当日花费 / 余额。
+- 报警走本插件自包含通道（宿主队列 `/api/alarm` → 客户端 WebAudio + ack），不依赖任何第三方插件。
+
+## 先看这条坑（否则可能整个 dsh-web 起不来）
+
+**契约**：凡是列进 profile `dsh.profile.bundles` 的包，`package.json` **必须**声明 `dsh.bundle.patch` 指向真实存在的 `cordis.patch.yml`。缺一个，宿主加载 profile 时会直接报
+`profile bundle "<pkg>" declares no dsh.bundle in its package.json` 并退出 —— **爆炸半径是整个 dsh-web（你的所有会话与面板），不是「这个插件不生效」**。
+
+用 `dsh plugin … add` 安装时这一条会自动满足；手改 JSON 时请特别小心。
 
 ## 仓库结构
 
 ```
-dsh-quick-append/            插件：宿主侧 src/index.ts、客户端 src/client/、构建产物 lib/、测试 test/
+dsh-quick-append/            宿主半 src/index.ts + 客户端半 src/client/ + 构建产物 lib/ + 测试 test/
 dsh-dialogue-alert-message/  同上（另含 SPEC.md、integration-check.mjs）
 dsh-ptc-task/                纯宿主插件：src/index.ts + lib/index.js，无客户端半
-docs/                        设计与迭代记录（Markdown、界面截图）
+docs/                        设计与迭代记录（含界面截图与踩坑过程）
 ```
 
 每个插件目录内的固定文件：
 
 - `cordis.patch.yml` —— 把该插件插入 profile 层栈的 bundle patch（宿主接入凭据）
-- `scripts/build.ps1` —— 构建入口，PowerShell 脚本
+- `scripts/build.ps1` —— 构建入口（Windows PowerShell）
 - `lib/` —— 已提交的构建产物（含 `lib/types/*.d.ts` 与 sourcemap）
 
-## 接入方式
+## 环境要求
 
-三个插件都走同一套契约：**包名进 profile 的 `dsh.profile.bundles`，包内必须有
-`dsh.bundle.patch` 指向真实存在的 `cordis.patch.yml`**。二者缺一，宿主加载 profile
-时会直接报 `profile bundle "<pkg>" declares no dsh.bundle in its package.json` 并退出——
-爆炸半径是整个 dsh-web，而不是「这个插件不生效」。细节见各插件 README 的接入章节。
+- DSH ≥ `0.1.5-rc.1`（本仓库在该版本上开发与验证；`web` profile）
+- Node.js ≥ 20；加载插件**不需要**构建，改源码才需要
+- 构建脚本是 Windows PowerShell（`scripts/build.ps1`，依赖 `$env:DSH_CHECKOUT` 或 `-Checkout` 参数）
+- 仓库不提交 `node_modules/`；`lib/` 构建产物**有意**随仓库提交
 
-## 构建与测试
+## 开发与测试
 
 ```powershell
-cd dsh-<plugin>
-pnpm install              # 安装依赖
-pnpm run build            # 各插件 build.ps1：tsdown / tsc 输出到 lib/
-pnpm test                 # node --test（各插件测试集不同）
+cd dsh-quick-append
+$env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"   # 或给 build.ps1 传 -Checkout
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
+npm test          # node --test
+npm run typecheck # tsc -p tsconfig.json --noEmit
 ```
 
-环境：Windows + PowerShell（`build.ps1` 依赖 pwsh/powershell）、Node.js ≥ 20、pnpm。
-构建脚本需要本机存在 DSH 源码 checkout（用 `-Checkout` 参数指定），详见各插件注意事项。
+## 搜索关键词 / Keywords
 
-仓库不提交 `node_modules/`；`lib/` 构建产物**有意**随仓库提交。
+`DSH` · `DSH 插件` · `DeepSeek Harness` · `DeepSeek Harness 插件` · `DeepSeek 外部插件` · `cordis` · `cordis bundle` · `profile bundle` · `预存命令` · `提示词快捷追加` · `prompt preset` · `子代理任务派发` · `subagent dispatch` · `PTC` · `中断报警` · `用量监控` · `AI Agent 提效`
 
 ## 许可
 
-仓库本身未附 `LICENSE` 文件；各插件的 `package.json` 声明 `license: BSD-3-Clause`。
+BSD-3-Clause，见 [LICENSE](LICENSE)。三个插件的 `package.json` 同样声明 `license: BSD-3-Clause`。

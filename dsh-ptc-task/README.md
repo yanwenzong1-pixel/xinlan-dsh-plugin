@@ -121,9 +121,11 @@ npm test                                       # node --test "test/*.test.mjs"
 
 `scripts/build.ps1` 的行为与前置条件（`:14-76`）：
 
-1. 前置检查：`-Checkout` 指向的 DSH 源码 checkout 必须存在（默认值是占位路径
-   `C:\Users\<user>\Documents\Deepseek\_upgrade\dsh-v0.1.5-rc.1\src\deepseek-harness-dsh-v0.1.5-rc.1`，
-   本机需按实际情况传参），且其中 `node_modules\.bin\tsc.cmd` 存在。
+1. 前置检查：`-Checkout` 指向的 DSH 源码 checkout 必须存在，且其中 `node_modules\.bin\tsc.cmd`
+   存在。`-Checkout` 默认取 **`$env:DSH_CHECKOUT`**（2026-10-04 起不再写死本机路径，
+   `scripts/build.ps1:18`）；两者都没有时脚本明确报错
+   `未提供 dsh checkout：请传 -Checkout <路径>，或设置环境变量 DSH_CHECKOUT`，而不是去猜路径
+   （`scripts/build.ps1:26`）。
 2. 在插件自己的 `node_modules` 下建**精确 junction**（cordis / schemastery / dsh-tools / @types/node），
    指向 checkout 里的真实包位置；**不会**整体 junction 到 checkout 的 `node_modules`（那样拿不到 cordis）。
 3. 用 checkout 里的 tsc 编译 `tsconfig.json` → `lib/index.js`，然后 `node --check` 做语法自检。

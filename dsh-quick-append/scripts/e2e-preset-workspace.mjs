@@ -16,9 +16,19 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const base = (process.argv[2] ?? 'http://127.0.0.1:3080').split('?')[0]
-const repoRoot = 'C:/Users/<user>/Documents/Deepseek/<repo>'
-const { applyDshWebAuth } = await import(pathToFileURL(resolve(repoRoot, 'scripts/lib/dsh-auth-cookie.mjs')).href)
-const pwPath = process.env.PW_PATH ?? resolve('C:/Users/<user>/Documents/Deepseek/_upgrade/dsh-v0.1.5-rc.1/src/deepseek-harness-dsh-v0.1.5-rc.1/node_modules/.pnpm/playwright@1.61.1/node_modules/playwright/index.js')
+/**
+ * 外部依赖路径一律走环境变量（2026-10-04 脱敏后修）：写死本机绝对路径既泄露用户名，
+ * 又让脚本在别人的机器上直接跑不动。缺哪个就报哪个。
+ *   DSH_AUTH_HELPER = dsh-auth-cookie.mjs 的绝对路径
+ *   PW_PATH         = playwright/index.js 的绝对路径
+ */
+const needEnv = (name, what) => {
+  const value = process.env[name]
+  if (value === undefined || value.trim() === '') throw new Error(`缺少环境变量 ${name}：${what}`)
+  return value
+}
+const { applyDshWebAuth } = await import(pathToFileURL(needEnv('DSH_AUTH_HELPER', 'dsh-auth-cookie.mjs 绝对路径')).href)
+const pwPath = needEnv('PW_PATH', 'playwright/index.js 绝对路径')
 const pw = (await import(pathToFileURL(pwPath).href)).default
 
 const STORE_KEY = 'dsh-quick-append.presets'

@@ -1,4 +1,4 @@
-# dsh-dialogue-alert-message 构建链（PowerShell 版，等价于 xllh-analysis-model-list 的 scripts/build.sh）
+﻿# dsh-dialogue-alert-message 构建链（PowerShell 版，等价于 xllh-analysis-model-list 的 scripts/build.sh）
 #
 # 步骤：
 #   1. 在插件自己的 node_modules 下建**精确 junction**，指向 dsh checkout 里对应的真实包位置
@@ -12,7 +12,9 @@
 # 注意：本脚本**不跑 test\**（测试是独立步骤，见报告）。
 [CmdletBinding()]
 param(
-  [string]$Checkout = 'C:\Users\<user>\Documents\Deepseek\_upgrade\dsh-v0.1.5-rc.1\src\deepseek-harness-dsh-v0.1.5-rc.1',
+  # dsh checkout 根：默认取 $env:DSH_CHECKOUT。**不写死本机路径** —— 那既泄露用户名，
+  # 也让脚本在别人机器上直接跑不动（2026-10-04 脱敏后修）。
+  [string]$Checkout = $env:DSH_CHECKOUT,
   [switch]$SkipLinks,
   [switch]$SkipClient
 )
@@ -21,6 +23,7 @@ $root = $PSScriptRoot | Split-Path -Parent
 Set-Location $root
 Write-Host "== dsh-dialogue-alert-message build @ $root"
 
+if ([string]::IsNullOrWhiteSpace($Checkout)) { throw '未提供 dsh checkout：请传 -Checkout <路径>，或设置环境变量 DSH_CHECKOUT' }
 if (-not (Test-Path "$Checkout\packages")) { throw "checkout 不可用: $Checkout" }
 $tsc = Join-Path $Checkout 'node_modules\.bin\tsc.cmd'
 if (-not (Test-Path $tsc)) { throw "tsc 缺失: $tsc" }
@@ -53,7 +56,10 @@ if (-not $SkipLinks) {
     $existing = Get-Item $link -Force -ErrorAction SilentlyContinue
     if ($existing) {
       if ($existing.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-        Remove-Item $link -Force                      # 只删链接本身（不用 -Recurse）
+        # PS 5.1 的 Remove-Item 删 junction/符号链接会抛 NullReferenceException
+        # （2026-10-09 真机复现，位置就是这一行）⇒ 改用 .NET 非递归删除：
+        # 只摘掉链接本身，不递归、不碰目标内容。
+        if ($existing.PSIsContainer) { [IO.Directory]::Delete($link, $false) } else { [IO.File]::Delete($link) }
       } elseif ($existing.PSIsContainer) {
         $n = (Get-ChildItem $link -Force -ErrorAction SilentlyContinue | Measure-Object).Count
         if ($n -gt 0) { throw "拒绝覆盖非空真实目录: $link ($n 个条目)——请人工确认" }

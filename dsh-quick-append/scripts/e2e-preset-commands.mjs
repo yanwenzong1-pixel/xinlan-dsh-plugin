@@ -16,14 +16,24 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { statSync } from 'node:fs'
 // 期望值直接取叶子的纯函数（与实现同一来源，避免脚本里再抄一份拼接规则）。
-import { insertionText } from '../src/lib/command-store.ts'
+import { insertionText, COMMAND_MENU_OVERFLOW_HINT } from '../src/lib/command-store.ts'
 
 const base = (process.argv[2] ?? 'http://127.0.0.1:3080').split('?')[0]
 /** 面板截图落点：<workspace>/docs（本脚本在 <plugin>/scripts 下）。 */
 const docsDir = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'docs')
-const repoRoot = 'C:/Users/<user>/Documents/Deepseek/<repo>'
-const { applyDshWebAuth } = await import(pathToFileURL(resolve(repoRoot, 'scripts/lib/dsh-auth-cookie.mjs')).href)
-const pwPath = process.env.PW_PATH ?? resolve('C:/Users/<user>/Documents/Deepseek/_upgrade/dsh-v0.1.5-rc.1/src/deepseek-harness-dsh-v0.1.5-rc.1/node_modules/.pnpm/playwright@1.61.1/node_modules/playwright/index.js')
+/**
+ * 外部依赖路径一律走环境变量（2026-10-04 脱敏后修）：写死本机绝对路径既泄露用户名，
+ * 又让脚本在别人的机器上直接跑不动。缺哪个就报哪个，不做静默兜底。
+ *   DSH_AUTH_HELPER = dsh-auth-cookie.mjs 的绝对路径（给浏览器上下文装 DSH 会话 cookie）
+ *   PW_PATH         = playwright/index.js 的绝对路径
+ */
+const needEnv = (name, what) => {
+  const value = process.env[name]
+  if (value === undefined || value.trim() === '') throw new Error(`缺少环境变量 ${name}：${what}`)
+  return value
+}
+const { applyDshWebAuth } = await import(pathToFileURL(needEnv('DSH_AUTH_HELPER', 'dsh-auth-cookie.mjs 绝对路径')).href)
+const pwPath = needEnv('PW_PATH', 'playwright/index.js 绝对路径')
 const pw = (await import(pathToFileURL(pwPath).href)).default
 
 const COMMAND_KEY = 'dsh-quick-append.commands'
@@ -135,6 +145,108 @@ const layerChainClean = (page, selector) => page.evaluate((sel) => {
   }
   return { ok: bad.length === 0, detail: bad.join(' | ') }
 }, selector)
+
+/**
+ * 菜单几何（2026-10-04 事故后新增）：判定"面板装得下自己的内容"与"最后一条真的够得着"。
+ *
+ * 为什么不能用 scrollHeight 猜：旧门禁只断言"列表能滚 + 高度受限"，结果 7 条时面板 260 装不下
+ * 324 的内容 —— 最后一行被画到**卡片外**并被宿主元素盖住，而 scrollHeight 一切正常（假绿）。
+ * 所以判据一律落在**矩形是否在面板矩形内** + **elementFromPoint 是否命中它**。
+ *
+ * 调用即"滚到底"：能滚的话最后一条必须露出来；不能滚（内容装得下）时滚动量应为 0。
+ */
+const menuFitOf = (page) => page.evaluate((sel) => {
+  const panel = document.querySelector(sel)
+  const list = document.querySelector(`${sel} .dsh-qa-menu-list`)
+  const head = document.querySelector(`${sel} .dsh-qa-menu-head`)
+  const foot = document.querySelector(`${sel} .dsh-qa-menu-foot`)
+  if (panel === null || list === null) return null
+  const items = [...list.querySelectorAll('.dsh-qa-menu-item')]
+  const last = items.length === 0 ? null : items[items.length - 1]
+  const scrollable = list.scrollHeight > list.clientHeight
+  const panelOverflows = panel.scrollHeight > panel.clientHeight + 1
+  list.scrollTop = list.scrollHeight
+  const pr = panel.getBoundingClientRect()
+  const lr = list.getBoundingClientRect()
+  const fr = foot === null ? null : foot.getBoundingClientRect()
+  const lr2 = last === null ? null : last.getBoundingClientRect()
+  const inside = (r) => r !== null && r.top >= pr.top - 0.5 && r.bottom <= pr.bottom + 0.5
+  const hitLast = lr2 === null ? false : (() => {
+    const el = document.elementFromPoint(Math.round(lr2.left + lr2.width / 2), Math.round(lr2.top + lr2.height / 2))
+    return el !== null && (el === last || last.contains(el))
+  })()
+  return {
+    viewportH: window.innerHeight,
+    panelH: Math.round(pr.height),
+    panelOverflows,
+    listScrollable: scrollable,
+    scrollTop: Math.round(list.scrollTop),
+    listBottomVsPanelBottom: Math.round(lr.bottom - pr.bottom),
+    headInsidePanel: head === null ? null : inside(head.getBoundingClientRect()),
+    footInsidePanel: fr === null ? null : inside(fr),
+    items: items.length,
+    lastItemText: last === null ? null : last.textContent,
+    lastItemInsidePanel: inside(lr2),
+    lastItemHit: hitLast,
+    footText: foot === null ? null : foot.textContent,
+  }
+}, MENU)
+
+/**
+ * 编辑弹窗几何（2026-10-04 第二轮）：判"底部操作行是否永远在弹窗内且可点"。
+ *
+ * 与 menuFitOf 同一套判据口径（矩形包含 + elementFromPoint 命中），理由见上：
+ * 旧 G7 只断言"弹窗高度 ≤ 86vh + 滚动条隐藏"，而故障态下 86vh 恰好成立、
+ * 真正被推走的是**底部操作行**（视口高 ≤ 500 时被推到弹窗可视区之外，≤ 460 时点不到）。
+ */
+const dialogFitOf = (page) => page.evaluate((sel) => {
+  const dialog = document.querySelector(sel)
+  if (dialog === null) return null
+  const dr = dialog.getBoundingClientRect()
+  const body = dialog.querySelector('.dsh-qa-body')
+  const list = dialog.querySelector('.dsh-qa-cmd-list')
+  const foot = dialog.querySelector('.dsh-qa-footer')
+  const rows = list === null ? [] : [...list.querySelectorAll('.dsh-qa-cmd-row')]
+  const listScrolls = list === null ? null : list.scrollHeight > list.clientHeight + 1
+  // 与 menuFitOf 同口径：先滚到底，再判"最后一行是否落在弹窗内且可点"
+  // （可滚列表停在顶部时最后一行当然在视口外，那是滚动语义，不是缺陷）。
+  if (list !== null) list.scrollTop = list.scrollHeight
+  const inside = (el) => {
+    if (el === null) return null
+    const r = el.getBoundingClientRect()
+    return r.top >= dr.top - 0.5 && r.bottom <= dr.bottom + 0.5
+  }
+  const hitOf = (el) => {
+    if (el === null) return null
+    const r = el.getBoundingClientRect()
+    if (r.width === 0 || r.height === 0) return false
+    const at = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2))
+    return at !== null && (at === el || el.contains(at))
+  }
+  return {
+    viewportH: window.innerHeight,
+    dialogH: Math.round(dr.height),
+    dialogInsideViewport: dr.top >= -0.5 && dr.bottom <= window.innerHeight + 0.5,
+    dialogSelfScrolls: dialog.scrollHeight > dialog.clientHeight + 1,
+    bodyScrolls: body === null ? null : body.scrollHeight > body.clientHeight + 1,
+    listScrolls,
+    listInsideDialog: inside(list),
+    rows: rows.length,
+    lastRowInsideDialog: rows.length === 0 ? null : inside(rows[rows.length - 1]),
+    footInsideDialog: inside(foot),
+    footButtons: foot === null ? [] : [...foot.querySelectorAll('button')].map((b) => ({
+      text: (b.textContent ?? '').trim(),
+      inside: inside(b),
+      hit: hitOf(b),
+      h: Math.round(b.getBoundingClientRect().height),
+    })),
+    // 只统计"视觉上真的溢出"的横向溢出：省略号截断（overflow hidden）是设计，不算缺陷
+    realOverflowX: [...dialog.querySelectorAll('*')]
+      .filter((el) => el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX === 'visible')
+      .slice(0, 3)
+      .map((el) => `${String(el.className) || el.tagName}:${String(el.clientWidth)}<${String(el.scrollWidth)}`),
+  }
+}, DIALOG)
 
 /** 打开空态/有数据两种左键菜单。 */
 const openMenu = async (page) => { await clickIt(page.locator(CMD_BTN)); await page.waitForTimeout(250) }
@@ -469,20 +581,13 @@ try {
   const many = Array.from({ length: 20 }, (_, i) => ({ id: `m${String(i)}`, title: `E2E-批量指令-${String(i)}`, content: `正文-${String(i)}` }))
   await seedAndReload(page, JSON.stringify({ version: 1, commands: many }))
   await openMenu(page)
-  const scrollInfo = await page.evaluate((sel) => {
-    const list = document.querySelector(`${sel} .dsh-qa-menu-list`)
-    const panel = document.querySelector(sel)
-    if (list === null || panel === null) return null
-    return {
-      scrollable: list.scrollHeight > list.clientHeight,
-      listH: Math.round(list.getBoundingClientRect().height),
-      items: list.children.length,
-      panelH: Math.round(panel.getBoundingClientRect().height),
-    }
-  }, MENU)
-  check('F21 20 条时菜单内部滚动（列表有滚动余量、高度被 max-height 限住、20 项都在）',
-    scrollInfo !== null && scrollInfo.scrollable && scrollInfo.items === 20 && scrollInfo.listH <= 240 && scrollInfo.panelH <= 320,
-    JSON.stringify(scrollInfo))
+  const fit20 = await menuFitOf(page)
+  check('F21 20 条时列表内部滚动、面板装得下 head/list/foot、且给出可见的滚动提示（滚动条按规范隐藏）',
+    fit20 !== null && fit20.items === 20 && fit20.listScrollable && !fit20.panelOverflows &&
+    fit20.headInsidePanel === true && fit20.footInsidePanel === true &&
+    fit20.lastItemInsidePanel === true && fit20.lastItemHit === true &&
+    String(fit20.footText).includes(COMMAND_MENU_OVERFLOW_HINT),
+    JSON.stringify(fit20))
   await closeMenu(page)
 
   const longTitle = 'E2E-超长标题'.repeat(20)
@@ -528,6 +633,152 @@ try {
   await page.setViewportSize({ width: 1600, height: 1000 })
   await page.waitForTimeout(400)
 
+  // ── 装得下 / 够得着（2026-10-04 真机事故：7 条只显示 6 条，第 7 条被画到卡片外而看不到）──
+  const seven = Array.from({ length: 7 }, (_, i) => ({ id: `s${String(i)}`, title: `E2E-七条-${String(i + 1)}`, content: `正文-${String(i + 1)}` }))
+  await seedAndReload(page, JSON.stringify({ version: 1, commands: seven }))
+  await openMenu(page)
+  const fit7 = await menuFitOf(page)
+  check('F25 7 条（用户现场）时面板装下全部内容：不溢出、foot 可见、第 7 条在卡片内且可点、无需滚动',
+    fit7 !== null && fit7.items === 7 && fit7.panelOverflows === false && fit7.listScrollable === false &&
+    fit7.headInsidePanel === true && fit7.footInsidePanel === true &&
+    fit7.lastItemText === 'E2E-七条-7' && fit7.lastItemInsidePanel === true && fit7.lastItemHit === true,
+    JSON.stringify(fit7))
+  check('F25b 7 条时不给滚动提示（反例：装得下就不该提示还能滚）',
+    fit7 !== null && !String(fit7.footText).includes(COMMAND_MENU_OVERFLOW_HINT), String(fit7 === null ? 'null' : fit7.footText))
+  await closeMenu(page)
+
+  await seedAndReload(page, JSON.stringify({ version: 1, commands: many }))
+  await openMenu(page)
+  const fit20b = await menuFitOf(page)
+  check('F26 20 条时给出滚动提示，且滚到底后第 20 条仍在卡片内可点',
+    fit20b !== null && fit20b.listScrollable && fit20b.scrollTop > 0 &&
+    String(fit20b.footText).includes(COMMAND_MENU_OVERFLOW_HINT) &&
+    fit20b.lastItemInsidePanel === true && fit20b.lastItemHit === true,
+    JSON.stringify(fit20b))
+  await closeMenu(page)
+
+  await page.setViewportSize({ width: 900, height: 300 })
+  await page.waitForTimeout(400)
+  await openMenu(page)
+  const fitShort = await menuFitOf(page)
+  check('F27 短视口（900x300）+ 20 条：面板按边距夹紧到视口内，foot 不被挤出、最后一条仍够得着',
+    fitShort !== null && fitShort.panelH <= fitShort.viewportH - 10 && fitShort.panelOverflows === false &&
+    fitShort.footInsidePanel === true && fitShort.lastItemInsidePanel === true && fitShort.lastItemHit === true,
+    JSON.stringify(fitShort))
+  await closeMenu(page)
+  await page.setViewportSize({ width: 1600, height: 1000 })
+  await page.waitForTimeout(400)
+
+  // ── 编辑弹窗：同一缺陷类（2026-10-04 第二轮）—— 底部操作行必须永远在弹窗内且可点 ──
+  // 实测阈值：列表滚动临界 N₁=4 条；视口高 ≤530 弹窗整体滚动、≤500 底部行出界、≤460 按钮点不到。
+  const openDialog = async () => {
+    await page.locator(CMD_BTN).first().dispatchEvent('contextmenu', { bubbles: true })
+    await page.waitForTimeout(300)
+  }
+  const closeDialog = async () => {
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(200)
+  }
+
+  await seedAndReload(page, JSON.stringify({ version: 1, commands: many }))
+  await page.setViewportSize({ width: 1000, height: 1000 })
+  await page.waitForTimeout(300)
+  await openDialog()
+  const dlgRoomy = await dialogFitOf(page)
+  check('F28 宽松视口（1000x1000）+20 条：弹窗不自滚、列表是滚动区且行都在弹窗内、底部操作行在弹窗内且可点',
+    dlgRoomy !== null && dlgRoomy.rows === 20 && dlgRoomy.dialogSelfScrolls === false &&
+    dlgRoomy.listScrolls === true && dlgRoomy.listInsideDialog === true && dlgRoomy.lastRowInsideDialog === true &&
+    dlgRoomy.footInsideDialog === true && dlgRoomy.footButtons.length > 0 &&
+    dlgRoomy.footButtons.every((b) => b.inside && b.hit) && dlgRoomy.realOverflowX.length === 0,
+    JSON.stringify(dlgRoomy))
+  await closeDialog()
+
+  await page.setViewportSize({ width: 1000, height: 460 })
+  await page.waitForTimeout(300)
+  await openDialog()
+  const dlgShort = await dialogFitOf(page)
+  check('F29 短视口（1000x460）+20 条：弹窗不越出视口、**底部操作行仍在弹窗内且可点**（滚动由内容区承担）',
+    dlgShort !== null && dlgShort.dialogInsideViewport === true &&
+    dlgShort.dialogH <= Math.round(dlgShort.viewportH * 0.86) + 1 &&
+    dlgShort.dialogSelfScrolls === false && dlgShort.footInsideDialog === true &&
+    dlgShort.footButtons.every((b) => b.inside && b.hit),
+    JSON.stringify(dlgShort))
+  await closeDialog()
+
+  await page.setViewportSize({ width: 1000, height: 340 })
+  await page.waitForTimeout(300)
+  await seedAndReload(page, JSON.stringify({ version: 1, commands: seven.slice(0, 4) }))
+  await openDialog()
+  const dlgTiny = await dialogFitOf(page)
+  check('F30 极矮视口（1000x340）+4 条：底部操作行仍可点，内容区承担滚动（安全阀生效）',
+    dlgTiny !== null && dlgTiny.footInsideDialog === true &&
+    dlgTiny.footButtons.every((b) => b.inside && b.hit) && dlgTiny.rows === 4,
+    JSON.stringify(dlgTiny))
+  await closeDialog()
+
+  await page.setViewportSize({ width: 700, height: 800 })
+  await page.waitForTimeout(300)
+  await seedAndReload(page, JSON.stringify({
+    version: 1,
+    commands: Array.from({ length: 3 }, (_, i) => ({ id: `long${String(i)}`, title: `超长标题-${String(i)}-`.repeat(8), content: 'C' })),
+  }))
+  await openDialog()
+  const dlgLong = await dialogFitOf(page)
+  const ellipsisOk = await page.evaluate((sel) => {
+    const title = document.querySelector(`${sel} .dsh-qa-cmd-title`)
+    if (title === null) return null
+    const style = getComputedStyle(title)
+    return { clipped: title.scrollWidth > title.clientWidth, textOverflow: style.textOverflow, whiteSpace: style.whiteSpace }
+  }, DIALOG)
+  check('F31 长标题：不产生视觉横向溢出（省略号截断），底部按钮仍可点',
+    dlgLong !== null && dlgLong.realOverflowX.length === 0 &&
+    ellipsisOk !== null && ellipsisOk.clipped && ellipsisOk.textOverflow === 'ellipsis' && ellipsisOk.whiteSpace === 'nowrap' &&
+    dlgLong.footButtons.every((b) => b.inside && b.hit),
+    JSON.stringify({ overflowX: dlgLong === null ? null : dlgLong.realOverflowX, ellipsisOk }))
+  await closeDialog()
+
+  // 焦点管理：内容区成为滚动容器后，键盘聚焦到的控件必须被滚进弹窗可视区（否则"能聚焦但看不见"）
+  await page.setViewportSize({ width: 1000, height: 460 })
+  await page.waitForTimeout(300)
+  await seedAndReload(page, JSON.stringify({ version: 1, commands: many }))
+  await openDialog()
+  const focusInfo = await page.evaluate((sel) => {
+    const dialog = document.querySelector(sel)
+    const input = dialog.querySelector('.dsh-qa-input')
+    input.focus()
+    const dr = dialog.getBoundingClientRect()
+    const r = input.getBoundingClientRect()
+    const foot = dialog.querySelector('.dsh-qa-footer').getBoundingClientRect()
+    const footInside = foot.top >= dr.top - 0.5 && foot.bottom <= dr.bottom + 0.5
+    const btn = [...dialog.querySelectorAll('.dsh-qa-footer button')].pop()
+    const br = btn.getBoundingClientRect()
+    const at = document.elementFromPoint(Math.round(br.left + br.width / 2), Math.round(br.top + br.height / 2))
+    return {
+      focused: document.activeElement === input,
+      inputInsideDialog: r.top >= dr.top - 0.5 && r.bottom <= dr.bottom + 0.5,
+      footInside,
+      footerBtnHit: at !== null && (at === btn || btn.contains(at)),
+    }
+  }, DIALOG)
+  check('F32 短视口（1000x460）+20 条：键盘聚焦输入框后被滚进弹窗可视区，且底部操作行仍可见可点',
+    focusInfo.focused && focusInfo.inputInsideDialog && focusInfo.footInside && focusInfo.footerBtnHit,
+    JSON.stringify(focusInfo))
+  await closeDialog()
+
+  // 边界：0 条（空列表）不得空白/溢出，底部操作行仍可点
+  await seedAndReload(page, JSON.stringify({ version: 1, commands: [] }))
+  await page.setViewportSize({ width: 1000, height: 500 })
+  await page.waitForTimeout(300)
+  await openDialog()
+  const dlgEmpty = await dialogFitOf(page)
+  check('F33 0 条边界：弹窗正常渲染（无溢出），底部操作行在弹窗内且可点',
+    dlgEmpty !== null && dlgEmpty.rows === 0 && dlgEmpty.dialogSelfScrolls === false &&
+    dlgEmpty.footInsideDialog === true && dlgEmpty.footButtons.every((b) => b.inside && b.hit),
+    JSON.stringify(dlgEmpty))
+  await closeDialog()
+  await page.setViewportSize({ width: 1600, height: 1000 })
+  await page.waitForTimeout(300)
+
   // ── UI 精致化实测：规范配方必须真的落在浏览器算出来的样式上（需求 5.1/5.2）──
   await seedAndReload(page, JSON.stringify({ version: 1, commands: [{ id: 'ui-1', title: 'UI 基线指令', content: 'UI 基线正文' }] }))
   await page.locator(CMD_BTN).first().dispatchEvent('contextmenu', { bubbles: true })
@@ -539,10 +790,12 @@ try {
     const mask = document.querySelector(sel.mask)
     const head = dialog.querySelector('.dsh-qa-head')
     const foot = dialog.querySelector('.dsh-qa-footer')
+    const bodyEl = dialog.querySelector('.dsh-qa-body')
     const input = dialog.querySelector('.dsh-qa-input')
     const primary = dialog.querySelector('.dsh-qa-btn-primary')
     const row = dialog.querySelector('.dsh-qa-cmd-row')
     const dialogStyle = styleOf(dialog)
+    const bodyStyle = styleOf(bodyEl)
     const headStyle = styleOf(head)
     const footStyle = styleOf(foot)
     const inputStyle = styleOf(input)
@@ -562,8 +815,10 @@ try {
       primaryBg: styleOf(primary) === null ? null : styleOf(primary).backgroundColor,
       primaryColor: styleOf(primary) === null ? null : styleOf(primary).color,
       rowBtnRadius: row === null ? null : styleOf(row.querySelector('.dsh-qa-btn')).borderRadius,
-      scrollbarHidden: dialogStyle.scrollbarWidth,
-      overscroll: dialogStyle.overscrollBehaviorY,
+      // 2026-10-04 第二轮：滚动落在**内容区**（.dsh-qa-body），弹窗自身只负责裁边。
+      scrollbarHidden: bodyStyle === null ? null : bodyStyle.scrollbarWidth,
+      overscroll: bodyStyle === null ? null : bodyStyle.overscrollBehaviorY,
+      dialogOverflow: dialogStyle.overflowY,
     }
   }, { dialog: DIALOG, mask: MASK })
 
@@ -583,10 +838,10 @@ try {
     JSON.stringify({ bg: ui?.primaryBg, color: ui?.primaryColor }))
   check('G6 行内操作按钮是胶囊（999px），与主按钮方角形成层级差',
     ui !== null && ui.rowBtnRadius === '999px', String(ui?.rowBtnRadius))
-  check('G7 弹窗滚动区：隐藏滚动条 + overscroll 不外溢 + 高度不超 86vh',
+  check('G7 弹窗滚动落在内容区（滚动条隐藏 + overscroll 不外溢）、弹窗自身裁边、高度不超 86vh',
     ui !== null && ui.scrollbarHidden === 'none' && ui.overscroll === 'contain' &&
-    ui.dialogH <= Math.round(ui.viewportH * 0.86),
-    JSON.stringify({ scrollbar: ui?.scrollbarHidden, overscroll: ui?.overscroll, h: ui?.dialogH, vh: ui?.viewportH }))
+    ui.dialogOverflow === 'hidden' && ui.dialogH <= Math.round(ui.viewportH * 0.86),
+    JSON.stringify({ scrollbar: ui?.scrollbarHidden, overscroll: ui?.overscroll, dialogOverflow: ui?.dialogOverflow, h: ui?.dialogH, vh: ui?.viewportH }))
 
   await page.locator(`${DIALOG} .dsh-qa-input`).focus()
   await page.waitForTimeout(600) // 等 0.15s 过渡跑完再读数（过渡中读到的 0.976/1.94px 是中间值，不是另一个配方）

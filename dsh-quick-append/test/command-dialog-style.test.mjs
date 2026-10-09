@@ -147,12 +147,14 @@ test('U10 弹窗骨架 = sp-window-skeleton：头部与主体有 1px 分割线�
 })
 
 test('U11 三处滚动区都按 ct-scrollbar-hidden：隐藏滚动条 + overscroll-behavior: contain', () => {
-  for (const selector of ['.dsh-qa-menu-list', '.dsh-qa-cmd-list', DIALOG]) {
+  // 2026-10-04 第二轮契约变更：弹窗自身**不再是**滚动容器（它会裁边），
+  // 滚动落在内容区 .dsh-qa-body（安全阀）与列表 .dsh-qa-cmd-list（首选）上 —— 见 D1–D3。
+  for (const selector of ['.dsh-qa-menu-list', '.dsh-qa-cmd-list', '.dsh-qa-body']) {
     has(selector, 'overflow-y: auto')
     has(selector, 'scrollbar-width: none')
     has(selector, 'overscroll-behavior: contain')
   }
-  for (const selector of ['.dsh-qa-menu-list::-webkit-scrollbar', '.dsh-qa-cmd-list::-webkit-scrollbar', `${DIALOG}::-webkit-scrollbar`]) {
+  for (const selector of ['.dsh-qa-menu-list::-webkit-scrollbar', '.dsh-qa-cmd-list::-webkit-scrollbar', '.dsh-qa-body::-webkit-scrollbar']) {
     has(selector, 'display: none')
   }
 })
@@ -213,6 +215,12 @@ test('U15 美化不得动结构契约：类名 / 5px 间距 / 层级 / 截断 / 
   has('.dsh-qa-tools', 'gap: 5px')
   has(ITEM, 'text-overflow: ellipsis')
   has(ITEM, 'white-space: nowrap')
-  has('.dsh-qa-menu-list', 'max-height: 240px')
+  // 2026-10-04 契约变更（真机事故"第 7 条看不到"）：列表**不再**写死 max-height ——
+  // 旧值 240 正是"面板预算 260 装不下 324 的内容、最后一行被画到卡片外"的成因之一。
+  // 新契约是"列表 = 唯一滚动区，高度由面板预算减去头/尾/内边距后决定"，
+  // 完整判据见 test/command-menu-fit.test.mjs 的 M5–M7。
+  has('.dsh-qa-menu-list', 'overflow-y: auto')
+  has('.dsh-qa-menu-list', 'min-height: 0')
+  has(MENU, 'overflow: hidden')
   assert.ok(raw.includes('z-index: 110') && raw.includes('z-index: 111'), '浮层层级被改动 —— 必须与叶子 COMMAND_LAYER 登记一致')
 })

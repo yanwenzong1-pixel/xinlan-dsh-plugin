@@ -79,10 +79,18 @@ test('畸形输入：缺 hasAttribute / 缺 tagName → 判否而非抛异常', 
 
 // —— 真实 DOM 契约：属性名与官方组件的挂载点一致 ——
 
-test('契约：data-composer-input 是官方 ComposerContentEditable 挂载的属性名', async () => {
+test('契约：data-composer-input 是官方 ComposerContentEditable 挂载的属性名', async (t) => {
+  // 真源在 dsh checkout 里（跨仓契约）：路径走 $DSH_CHECKOUT。
+  // 2026-10-04 脱敏后修 —— 原先写死本机绝对路径，既泄露用户名，也让本测试在别人机器上直接 ENOENT。
+  const checkout = process.env.DSH_CHECKOUT
+  if (checkout === undefined || checkout.trim() === '') {
+    // 没有 checkout 就无法核验这条跨仓契约；**明说跳过**，不假装通过（也不是"零跳过"的绿灯）。
+    t.skip('未设置 DSH_CHECKOUT：跨仓契约（官方 ComposerContentEditable）无法核验')
+    return
+  }
   const { readFile } = await import('node:fs/promises')
   const source = await readFile(
-    'C:/Users/<user>/Documents/Deepseek/_upgrade/dsh-v0.1.5-rc.1/src/deepseek-harness-dsh-v0.1.5-rc.1'
+    checkout.replace(/[\\/]+$/, '')
     + '/packages/client/ui-conversation/src/client/input/editor/ComposerContentEditable.tsx',
     'utf8',
   )
