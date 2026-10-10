@@ -1,0 +1,69 @@
+{
+  "series": "us-pmi-mfg",
+  "series_full_name": "ISM Manufacturing PMI (Institute for Supply Management, Report On Business)",
+  "unit": "index points (diffusion index, 50 = no change)",
+  "seasonal_adjustment": "seasonally adjusted (per ISM release title)",
+  "release_rule": "每月首个工作日 10:00 ET 发布上一个月数据（本次观测 12 期均符合；2026-01 顺延至 01-05 周一，为唯一例外）",
+  "generated_at": "2026-10-09T09:20:00+08:00",
+  "primary_source": {
+    "name": "PR Newswire 上的 Institute for Supply Management 官方发布稿",
+    "discovery_url": "https://www.prnewswire.com/search/news/?keyword=ISM%20manufacturing%20PMI",
+    "archive_url": "https://www.prnewswire.com/news/institute-for-supply-management/",
+    "access": "HTTP 200, 静态 HTML, 无登录/无付费, curl 可直接解析",
+    "verified_at": "2026-10-09T09:08:53+08:00"
+  },
+  "cross_check_sources": [
+    {
+      "name": "Trading Economics（ISM 专属新闻页）",
+      "url_template": "https://tradingeconomics.com/united-states/business-confidence/news/<id>",
+      "verified": [
+        { "period": "2026-09", "value": 54.5, "url": "https://tradingeconomics.com/united-states/business-confidence/news/588826", "raw": "The ISM Manufacturing PMI edged down to 54.5 in September 2026 from 54.6 in August" },
+        { "period": "2026-08", "value": 54.6, "url": "https://tradingeconomics.com/united-states/business-confidence/news/580097", "raw": "The ISM Manufacturing PMI fell to 54.6 in August 2026 from July's near four-year high of 55.6" }
+      ],
+      "caveat": "主页 /united-states/manufacturing-pmi 会把 ISM 与 S&P Global flash 混排（出现过 55.9 preliminary / 53.6 flash），必须用 ISM 新闻页或明确标注 ISM 的句子"
+    },
+    {
+      "name": "Business Insider Markets（ISM 稿件转载）",
+      "url": "https://markets.businessinsider.com/news/stocks/ism-manufacturing-pmi-fell-to-54-6-in-august-from-55-6-in-july-1036513194",
+      "verified": [{ "period": "2026-07", "value": 55.6, "raw": "The ISM Manufacturing PMI fell to 54.6 in August from July's near four-year high of 55.6" }]
+    },
+    {
+      "name": "Textile World（ISM 稿件全文转载）",
+      "url": "https://www.textileworld.com/textile-world/2026/09/manufacturing-pmi-at-54-6-august-2026-ism-manufacturing-pmi-report-manufacturing-expanded-for-the-eighth-consecutive-month/",
+      "verified": [{ "period": "2026-08", "value": 54.6, "raw": "Manufacturing PMI(R) At 54.6%; August 2026 ISM(R) Manufacturing PMI(R) Report ... 1 percentage point below the July figure of 55.6 percent" }]
+    },
+    {
+      "name": "Metro Atlanta CEO（ISM 稿件转载，含 Georgia CEO Staff Report）",
+      "url": "https://metroatlantaceo.com/news/2026/10/manufacturing-pmi-545-september-2026-ism-manufacturing-pmi-report/",
+      "verified": [{ "period": "2026-09", "value": 54.5, "raw": "Manufacturing PMI at 54.5% ... September 2026 ISM Manufacturing PMI Report ... August figure of 54.6 percent" }]
+    }
+  ],
+  "path_failure_evidence": [
+    { "source": "FRED", "claim": "无 ISM 制造业 PMI 免费系列", "evidence": "fredgraph.csv?id=NAPM 返回 11 字节 'Bad Request'（本会话早前抓取，精确时刻未留存）；2026-10-09 09:13-09:19 复测 fred.stlouisfed.org 全部超时（exit 28/56），代理与直连均不通；api.stlouisfed.org 返回 400 'Variable api_key is not set'（该主机可达，但需付费/免费 key）" },
+    { "source": "akshare macro_usa_ism_pmi / 金十 datacenter-api", "claim": "上游数据冻结", "evidence": "2026-10-09 09:11 带 x-app-id 等请求头直连 https://datacenter-api.jin10.com/reports/list_v2?max_date=&category=ec&attr_id=28 返回 20 条，最新 ['2025-09-02',48.7,49,48] ⇒ 最新一期为 2025-08 数据，已停滞约 13 个月" },
+    { "source": "ISM 官网 ismworld.org", "claim": "不可自动化", "evidence": "/pmi/ → HTTP 404；/pmi/manufacturing/ → HTTP 400；Report On Business 落地页 200 但仅 922 字节且无 PMI 数值；/reports/ism-report-on-business/pmi/ 正文 3116 字符但无数值（前端 JS 渲染/需会员）" },
+    { "source": "investing.com", "claim": "拦截", "evidence": "/economic-calendar/ism-manufacturing-pmi-173 → HTTP 403（3 字节）" },
+    { "source": "MacroMicro", "claim": "拦截", "evidence": "https://en.macromicro.me/collections/9/us-market-1/1/manufacturing-pmi → HTTP 403" },
+    { "source": "YCharts", "claim": "需 JS/可能付费", "evidence": "https://ycharts.com/indicators/us_pmi → HTTP 202 且 0 字节" },
+    { "source": "东方财富 ISM制造业指数页", "claim": "页面存在但接口未定位", "evidence": "https://data.eastmoney.com/cjsj/foreign_0_0.html → HTTP 200/86,555 字节，标题含「ISM制造业指数」，但正文无服务端渲染数值，main.js 内无 reportName/api 线索；标注为「未验证」，不建议作为自动源" },
+    { "source": "新浪美国宏观 API", "claim": "参数不匹配", "evidence": "quotes.sina.cn/mac/api/jsonp_v2.php/...get_pagedata?cate=usa&event=0 → 13 字节 'No such event'" }
+  ],
+  "data": [
+    { "period": "2025-10", "value": 48.7, "released_at_et": "2025-11-03 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-48-7-october-2025-ism-manufacturing-pmi-report-302601422.html", "evidence": "标题 Manufacturing PMI(R) at 48.7%; October 2025 ISM(R) Manufacturing PMI(R) Report；正文 48.7 percent，前值 49.1 percent；SOURCE Institute for Supply Management" },
+    { "period": "2025-11", "value": 48.2, "released_at_et": "2025-12-01 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-48-2-november-2025-ism-manufacturing-pmi-report-302626979.html", "evidence": "标题 Manufacturing PMI(R) at 48.2%; November 2025 ...；正文含 48.7 percent（上月）与 42.3 percent" },
+    { "period": "2025-12", "value": 47.9, "released_at_et": "2026-01-05 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-47-9-december-2025-ism-manufacturing-pmi-report-302649307.html", "evidence": "搜索页时间线：Jan 05, 2026, 10:00 ET Manufacturing PMI(R) at 47.9%" },
+    { "period": "2026-01", "value": 52.6, "released_at_et": "2026-02-02 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-52-6-january-2026-ism-manufacturing-pmi-report-302675443.html", "evidence": "搜索页时间线：Feb 02, 2026, 10:00 ET Manufacturing PMI(R) at 52.6%" },
+    { "period": "2026-02", "value": 52.4, "released_at_et": "2026-03-02 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-52-4-february-2026-ism-manufacturing-pmi-report-302699883.html", "evidence": "搜索页时间线：Mar 02, 2026, 10:00 ET Manufacturing PMI(R) at 52.4%；且 March 稿正文前值 52.4 percent 互证" },
+    { "period": "2026-03", "value": 52.7, "released_at_et": "2026-04-01 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-52-7-march-2026-ism-manufacturing-pmi-report-302730721.html", "evidence": "2026-10-09 09:08 抓取正文：标题 Manufacturing PMI(R) at 52.7%; March 2026 ...；正文 52.7 percent，前值 52.4 percent；SOURCE Institute for Supply Management" },
+    { "period": "2026-04", "value": 52.7, "released_at_et": "2026-05-01 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-52-7-april-2026-ism-manufacturing-pmi-report-302759226.html", "evidence": "搜索页时间线：May 01, 2026, 10:00 ET Manufacturing PMI(R) at 52.7%" },
+    { "period": "2026-05", "value": 54.0, "released_at_et": "2026-06-01 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-54-may-2026-ism-manufacturing-pmi-report-302786165.html", "evidence": "搜索页时间线：Jun 01, 2026, 10:00 ET Manufacturing PMI(R) at 54%" },
+    { "period": "2026-06", "value": 53.3, "released_at_et": "2026-07-01 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-53-3-june-2026-ism-manufacturing-pmi-report-302814991.html", "evidence": "搜索页时间线：Jul 01, 2026, 10:00 ET Manufacturing PMI(R) at 53.3%" },
+    { "period": "2026-07", "value": 55.6, "released_at_et": "2026-08-03 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-55-6-july-2026-ism-manufacturing-pmi-report-302840669.html", "evidence": "搜索页时间线：Aug 03, 2026, 10:00 ET Manufacturing PMI(R) at 55.6%；第三方互证见 cross_check_sources" },
+    { "period": "2026-08", "value": 54.6, "released_at_et": "2026-09-01 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-54-6-august-2026-ism-manufacturing-pmi-report-302865127.html", "evidence": "搜索页时间线：Sep 01, 2026, 10:00 ET Manufacturing PMI(R) at 54.6%；三级互证：TE/news/580097、Textile World、Business Insider" },
+    { "period": "2026-09", "value": 54.5, "released_at_et": "2026-10-01 10:00 ET", "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-54-5-september-2026-ism-manufacturing-pmi-report-302894520.html", "evidence": "2026-10-09 09:08 抓取正文：标题 Manufacturing PMI(R) at 54.5%; September 2026 ISM(R) Manufacturing PMI(R) Report；dateline Oct 01, 2026, 10:00 ET；正文 54.5 percent，前值 54.6 percent；SOURCE Institute for Supply Management" }
+  ],
+  "extra_periods_observed": [
+    { "period": "2025-08", "value": 48.7, "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-48-7-august-2025-ism-manufacturing-pmi-report-302543264.html" },
+    { "period": "2025-09", "value": 49.1, "url": "https://www.prnewswire.com/news-releases/manufacturing-pmi-at-49-1-september-2025-ism-manufacturing-pmi-report-302571530.html" }
+  ]
+}
