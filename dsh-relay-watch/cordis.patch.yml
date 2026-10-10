@@ -1,0 +1,21 @@
+# dsh bundle patch: inserts this plugin into a profile's layer stack.
+#
+# 契约（`packages/boot/app-boot/src/profile.ts:792-797`）：列进 profile `dsh.profile.bundles` 的包
+# **必须**在 package.json 声明 `dsh.bundle.patch` 指向本文件且文件真实存在，否则宿主启动即抛错退出。
+- insert:
+    - id: dsh-relay-watch
+      name: '@dsh-external/dsh-relay-watch'
+      config:
+        base: '<protocol-dir>'
+        self: 'A'
+        pollMs: 5000
+        maxRetry: 6
+        # ── v0.3.0（2026-10-08 用户指令）：崩溃简报改投「DSH崩溃报告统一处理」（槽位 CR）并成批投递 ──
+        # crashSlot：inbox/crash-*.md 投给谁。配好之前若槽位缺失 ⇒ 自动回落投给 self(A)，不丢件。
+        crashSlot: 'CR'
+        # crashQuietMs：本批最后一份落盘后再安静这么久，才把整批一次投出（= 一次唤醒、一封回函）。
+        crashQuietMs: 60000
+        # crashMaxHoldMs：硬上限——崩溃循环里永远等不到安静时，攒这么久就兜底投出。
+        crashMaxHoldMs: 300000
+        # crashRetryStuck：过了硬上限仍投不出去，按普通件计失败；累计这么多 tick 仍失败才进 failed/。
+        crashRetryStuck: 50
