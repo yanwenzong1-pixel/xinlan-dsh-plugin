@@ -16,6 +16,17 @@ window.__ModuleLoader__.load({
 			if (typeof v !== "number" || !Number.isFinite(v)) return "--";
 			return String(Math.trunc(v));
 		}
+		/**
+		* 侧栏状态栏文案（唯一出口，纯函数）：`对话: {N}，余额: {Y.YY}元`。
+		* - `usage === null`（首次加载未完成）→ 全部 '--'；
+		* - 余额未知/刷新失败 → 仅余额 '--'（`fmtMoney2` 兜底）；
+		* - **v0.2.2 起不再上屏「当日: X.XX元」**（用户指令 2026-10-11）：当日消耗仍在 `/api/usage`
+		*   与 `stats.json` 中保留，只是不展示。
+		*/
+		function statusTextOf(usage) {
+			if (usage === null) return "对话: --，余额: --元";
+			return `对话: ${fmtCount(usage.dialogueCount)}，余额: ${fmtMoney2(usage.balance)}元`;
+		}
 		/** 播放判定 + 下一个计数（纯函数）。count 为已播放次数。 */
 		function replayDecision(count, max = 3) {
 			const safeMax = Number.isFinite(max) && max >= 0 ? Math.floor(max) : 3;
@@ -44,9 +55,9 @@ window.__ModuleLoader__.load({
 		* completes; plays interruption alarm sounds from the host's self-contained
 		* notification service (host-side gate: total switch / mute-all / level filter
 		* / DND already applied; client only plays and acks). The wide bar shows the
-		* usage overview in the exact format: 对话: N，当日: X.XX元，余额: Y.YY元
-		* (tabular-nums; '--' while unknown/failed). The collapsed icon button keeps
-		* its original behavior. No other plugin is involved (v0.2.1).
+		* usage overview via the shared pure formatter: 对话: N，余额: Y.YY元
+		* (tabular-nums; '--' while unknown/failed; 「当日: X.XX元」已于 v0.2.2 按要求下屏). The collapsed
+		* icon button keeps its original behavior. No other plugin is involved (v0.2.1).
 		*/
 		const inject = ["slots"];
 		const STATUS_URL = "/@dsh-external/dsh-dialogue-alert-message/api/status";
@@ -201,7 +212,7 @@ window.__ModuleLoader__.load({
 				whiteSpace: "nowrap",
 				overflow: "hidden",
 				textOverflow: "ellipsis"
-			} }, usage === null ? "对话: --，当日: --元，余额: --元" : `对话: ${fmtCount(usage.dialogueCount)}，当日: ${fmtMoney2(usage.todayCost)}元，余额: ${fmtMoney2(usage.balance)}元`);
+			} }, statusTextOf(usage));
 		}
 		//#endregion
 		exports.apply = apply;

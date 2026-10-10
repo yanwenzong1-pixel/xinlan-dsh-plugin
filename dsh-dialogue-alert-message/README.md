@@ -1,11 +1,11 @@
 # @dsh-external/dsh-dialogue-alert-message
 
-监控 DSH 对话执行状态：侧栏状态栏显示 DeepSeek 账号用量（对话数 / 当日花费 / 余额）；
+监控 DSH 对话执行状态：侧栏状态栏显示 DeepSeek 账号用量（对话数 / 余额）；
 对话**正常完成**播「叮咚」；对话被**非用户主动**原因强制中断时，按等级播报警音。
 报警走本插件**自包含**通道（宿主内部队列 `/api/alarm` → 本插件客户端 WebAudio 发声 + ack），
 **不与其他任何插件交互**。
 
-- 当前版本：`0.2.1`（`package.json`；本轮把原先落后的 `0.1.1` 校正为与源码一致）
+- 当前版本：`0.2.2`（`package.json`；本轮按用户指令去掉状态栏的「当日: X.XX元」）
 - 形态：宿主半 `src/index.ts` + 客户端半 `src/client/index.ts`（插槽 `sidebar.footer.action`，`order: 10`）
 - 配套文件：`SPEC.md`（设计说明）、`integration-check.mjs`（宿主全链路检查）
 - 客户端注入：`['slots']`（`src/client/index.ts:21`）
@@ -17,12 +17,16 @@
 状态栏在侧栏「设置」按钮**上方**（`src/client/index.ts:107-111`），宽态文本为固定格式：
 
 ```
-对话: N，当日: X.XX元，余额: Y.YY元
+对话: N，余额: Y.YY元
 ```
 
+> v0.2.2 起**不再上屏「当日: X.XX元」**（用户指令 2026-10-11）。当日消耗仍在 `/api/usage`
+> 与 `stats.json` 中保留，只是不展示。文案由纯函数 `statusTextOf`（`src/lib/usage-stats.ts`）
+> 唯一给出，单测钉住三态 + 负面断言（任何输入都不含「当日」）。
+
 - `tabular-nums`、金额两位小数；折叠态只显示一个运行状态图标按钮（点击展开侧边栏，`:200-222`）。
-- 缺失态：首次加载未完成 → 三项全 `--`；余额从无成功记录 → 仅余额 `--`；
-  不出现 `undefined` / `NaN` / `null` / 原始错误信息（`:224-227`、`:202-211`）。
+- 缺失态：首次加载未完成 → 对话数与余额都是 `--`；余额从无成功记录 → 仅余额 `--`；
+  不出现 `undefined` / `NaN` / `null` / 原始错误信息（`:225-226`、`:202-211`）。
 - 客户端每 **1 秒**轮询 `/api/status` 与 `/api/usage`（`setInterval(..., 1000)`，`:193`）。
 
 数据口径：
@@ -30,7 +34,7 @@
 | 字段 | 来源 | 口径 |
 | --- | --- | --- |
 | `dialogueCount` | 顶层用户 session 的 `turn/end(reason.kind=completed)` | 每次完成轮 +1；同轮（`sessionId:turn`）重复回调幂等；子代理/后台 session 不计 |
-| `todayCost` | 插件侧累计：`assistant/message.usage` × 单价表 × 高峰/闲时因子 | 含 error/aborted/max-tokens 轮已消耗 token（真实扣费口径）；不区分 session，天然覆盖后台插件的 LLM 调用 |
+| `todayCost` | 插件侧累计：`assistant/message.usage` × 单价表 × 高峰/闲时因子 | 含 error/aborted/max-tokens 轮已消耗 token（真实扣费口径）；不区分 session，天然覆盖后台插件的 LLM 调用。**v0.2.2 起不再上屏**，仅 `/api/usage` 与 `stats.json` 保留 |
 | `balance` | `GET {baseURL}/user/balance`（官方接口无「当日消耗」字段） | 优先取 CNY，缺失取首项；负数/非法视为 `null`；查询失败保留上次成功缓存并只记日志 |
 
 跨日：按 `tzOffsetMin`（默认 UTC+8，与平台账单时区一致）清零当日消耗后重新累计，累计对话数不回退。

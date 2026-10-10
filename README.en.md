@@ -17,7 +17,7 @@
 | --- | --- | --- |
 | Retyping the same prompt or the same command over and over | ⚡ **Quick Append** | One click appends stored text/commands, **isolated per workspace**; with **LLM optimize** it also reads your project docs + the last 3 turns and turns a rough draft into a precise request |
 | Handing a whole job to a subagent, but the intermediate output floods your context | 🧩 **PTC Task** | The subagent runs in PTC (code) mode: it writes one program, keeps the intermediate output inside it, and returns **only the path to the result** |
-| Long runs die or overspend, and you notice afterwards | 🔔 **Dialogue Alert** | Forced interruptions ring immediately, by severity; the sidebar also shows DeepSeek conversation count / today's cost / balance |
+| Long runs die or overspend, and you notice afterwards | 🔔 **Dialogue Alert** | Forced interruptions ring immediately, by severity; the sidebar also shows DeepSeek conversation count and balance |
 
 All three load on the DSH side only: no DSH source edits, no touching your session data.
 
@@ -74,7 +74,7 @@ Then run `pnpm install` once inside that profile directory and restart dsh web.
 | --- | --- | --- | --- | --- |
 | ⚡ Quick Append | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.2 | Composer "quick append" button plus a stored-command menu and editor dialog |
 | 🧩 PTC Task | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | Registers the `ptc_task` tool: hand a whole job to a PTC-scoped subagent |
-| 🔔 Dialogue Alert | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.1 | Severity-based interruption alarms plus DeepSeek usage in the sidebar |
+| 🔔 Dialogue Alert | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.2 | Severity-based interruption alarms plus conversation count / balance in the sidebar |
 
 ### ⚡ Quick Append · [details](dsh-quick-append/README.md)
 
@@ -109,7 +109,7 @@ The optimise context has three parts (each with a code anchor — no black box):
 
 - Plays a chime when a conversation finishes normally, and a severity-graded alarm on **non-user-initiated** interruptions (tool error / forced cancel / session eviction / host restart).
 - User-initiated cancels stay silent.
-- The sidebar status bar shows DeepSeek account usage: conversation count / today's cost / balance.
+- The sidebar status bar shows DeepSeek account usage: conversation count / balance (since v0.2.2 the "today's cost" figure is no longer displayed; it is still returned by `/api/usage`).
 - Alarms travel over the plugin's own channel (host queue `/api/alarm` → client WebAudio + ack) and depend on no third-party plugin.
 
 ## Read this pitfall first (it can take down the whole dsh-web)

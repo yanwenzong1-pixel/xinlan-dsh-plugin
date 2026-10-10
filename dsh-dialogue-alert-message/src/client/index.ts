@@ -5,13 +5,13 @@
  * completes; plays interruption alarm sounds from the host's self-contained
  * notification service (host-side gate: total switch / mute-all / level filter
  * / DND already applied; client only plays and acks). The wide bar shows the
- * usage overview in the exact format: 对话: N，当日: X.XX元，余额: Y.YY元
- * (tabular-nums; '--' while unknown/failed). The collapsed icon button keeps
- * its original behavior. No other plugin is involved (v0.2.1).
+ * usage overview via the shared pure formatter: 对话: N，余额: Y.YY元
+ * (tabular-nums; '--' while unknown/failed; 「当日: X.XX元」已于 v0.2.2 按要求下屏). The collapsed
+ * icon button keeps its original behavior. No other plugin is involved (v0.2.1).
  */
 import { createElement, useEffect, useRef, useState } from 'react'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import { fmtCount, fmtMoney2 } from '../lib/usage-stats.js'
+import { statusTextOf } from '../lib/usage-stats.js'
 import { replayDecision, REPLAY_MAP_CAP } from '../lib/alarm-replay.js'
 
 type ClientContext = {
@@ -222,9 +222,8 @@ function DialogueAlertBar({ wide, toggleSidebar }: { wide: boolean; toggleSideba
   }
 
   // 缺失态占位：首次加载未完成 → 全部 '--'；余额未知/刷新失败 → 仅余额 '--'。
-  const text = usage === null
-    ? '对话: --，当日: --元，余额: --元'
-    : `对话: ${fmtCount(usage.dialogueCount)}，当日: ${fmtMoney2(usage.todayCost)}元，余额: ${fmtMoney2(usage.balance)}元`
+  // 文案由纯函数 statusTextOf 统一给出（单测钉住；v0.2.2 起不再含「当日」）。
+  const text = statusTextOf(usage)
 
   return createElement(
     'div',

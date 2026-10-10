@@ -16,6 +16,7 @@ import {
   fmtMoney2,
   fmtCount,
   parseBalancePayload,
+  statusTextOf,
   shouldRefresh,
   priceEntryFor,
 } from '../src/lib/usage-stats.ts'
@@ -268,4 +269,20 @@ test('shouldRefresh: 初始/过期触发，间隔内不触发', () => {
 test('priceEntryFor: 未知模型回退 fallback', () => {
   assert.equal(priceEntryFor(TABLE, 'deepseek-v4-flash'), PRICE)
   assert.equal(priceEntryFor(TABLE, 'no-such-model'), PRICE)
+})
+
+// —— 侧栏状态栏文案（v0.2.2：去掉「当日: X.XX元」） ——
+test('statusTextOf: 只上屏对话数与余额，宽态/占位态/余额未知三态固定', () => {
+  // 宽态：即使数据里带 todayCost，也不出现在文案里
+  assert.equal(statusTextOf({ dialogueCount: 12, todayCost: 3.456, balance: 88.5 }), '对话: 12，余额: 88.50元')
+  // 首次加载未完成 → 全占位
+  assert.equal(statusTextOf(null), '对话: --，余额: --元')
+  // 余额未知/刷新失败 → 仅余额占位
+  assert.equal(statusTextOf({ dialogueCount: 0, balance: null }), '对话: 0，余额: --元')
+  // 字段缺失不泄漏 undefined/NaN
+  assert.equal(statusTextOf({ dialogueCount: NaN, balance: undefined }), '对话: --，余额: --元')
+  // 负面断言：任何输入都不得再出现「当日」
+  for (const input of [null, { dialogueCount: 1, todayCost: 9.9, balance: 1 }, { balance: 2 }]) {
+    assert.ok(!statusTextOf(input).includes('当日'), '「当日」不应再上屏: ' + statusTextOf(input))
+  }
 })

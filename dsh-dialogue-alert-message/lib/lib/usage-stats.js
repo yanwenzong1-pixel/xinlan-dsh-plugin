@@ -136,6 +136,18 @@ export function fmtCount(v) {
         return '--';
     return String(Math.trunc(v));
 }
+/**
+ * 侧栏状态栏文案（唯一出口，纯函数）：`对话: {N}，余额: {Y.YY}元`。
+ * - `usage === null`（首次加载未完成）→ 全部 '--'；
+ * - 余额未知/刷新失败 → 仅余额 '--'（`fmtMoney2` 兜底）；
+ * - **v0.2.2 起不再上屏「当日: X.XX元」**（用户指令 2026-10-11）：当日消耗仍在 `/api/usage`
+ *   与 `stats.json` 中保留，只是不展示。
+ */
+export function statusTextOf(usage) {
+    if (usage === null)
+        return '对话: --，余额: --元';
+    return `对话: ${fmtCount(usage.dialogueCount)}，余额: ${fmtMoney2(usage.balance)}元`;
+}
 /** 官方 /user/balance 响应解析：优先 CNY，缺则首个；不可用/负数/非法 → null。 */
 export function parseBalancePayload(raw, preferCurrency = 'CNY') {
     let parsed = raw;

@@ -78,6 +78,17 @@ export declare function sanitizeOverview(state: UsageState, balance: BalanceStat
 /** 金额/次数展示：缺失一律 '--'，禁用 undefined/NaN/null 泄漏；金额两位小数。 */
 export declare function fmtMoney2(v: number | null | undefined): string;
 export declare function fmtCount(v: number | null | undefined): string;
+/**
+ * 侧栏状态栏文案（唯一出口，纯函数）：`对话: {N}，余额: {Y.YY}元`。
+ * - `usage === null`（首次加载未完成）→ 全部 '--'；
+ * - 余额未知/刷新失败 → 仅余额 '--'（`fmtMoney2` 兜底）；
+ * - **v0.2.2 起不再上屏「当日: X.XX元」**（用户指令 2026-10-11）：当日消耗仍在 `/api/usage`
+ *   与 `stats.json` 中保留，只是不展示。
+ */
+export declare function statusTextOf(usage: {
+    dialogueCount?: number | null;
+    balance?: number | null;
+} | null): string;
 /** 官方 /user/balance 响应解析：优先 CNY，缺则首个；不可用/负数/非法 → null。 */
 export declare function parseBalancePayload(raw: unknown, preferCurrency?: string): number | null;
 /** 余额刷新节流：初始必刷，间隔内不刷。 */
