@@ -27,6 +27,34 @@ window.__ModuleLoader__.load({
 			if (usage === null) return "对话: --，余额: --元";
 			return `对话: ${fmtCount(usage.dialogueCount)}，余额: ${fmtMoney2(usage.balance)}元`;
 		}
+		/**
+		* 计算「显示全文」真正可用的宽度：**始终先扣掉自己紧凑图标的占位**。
+		*
+		* 为什么必须扣：`free` 若按当前布局直接算，会出现自我循环 —— 我们已展开时会把同行插件挤小
+		* （真机实测：Cordis 行被挤到 87px），于是"剩余空间"看起来够，判定就一直维持展开，
+		* 等于反过来挤压 DSH 自带 UI。先扣掉自己的 12px 占位，判定就与自身当前形态无关：
+		* 放不下 → 收敛回紧凑图标 → 同行恢复原宽 → 判定稳定（不再互相挤压）。
+		*
+		* @param rowWidth 所在行的可用宽度（clientWidth）
+		* @param usedBySiblings 同行其他占位者已占用的宽度合计
+		*/
+		function availableForText(rowWidth, usedBySiblings) {
+			if (!Number.isFinite(rowWidth) || !Number.isFinite(usedBySiblings)) return NaN;
+			return rowWidth - usedBySiblings - 12;
+		}
+		/**
+		* 是否应降级为紧凑图标。
+		* - 非有限值/负值（量不出来）→ 一律降级：宁可只显示图标，也不显示被裁断的残条；
+		* - 已在紧凑态 → 需要 `required + FOOTER_FIT_MARGIN_PX` 才恢复全文（迟滞）；
+		* - 正常态 → 空间小于 `required` 即降级。
+		*/
+		function shouldCompact(input) {
+			const free = Number.isFinite(input?.free) ? input.free : NaN;
+			const required = Number.isFinite(input?.required) ? input.required : NaN;
+			if (!Number.isFinite(free) || !Number.isFinite(required) || free < 0 || required < 0) return true;
+			if (input.wasCompact) return free < required + 12;
+			return free < required;
+		}
 		/** 播放判定 + 下一个计数（纯函数）。count 为已播放次数。 */
 		function replayDecision(count, max = 3) {
 			const safeMax = Number.isFinite(max) && max >= 0 ? Math.floor(max) : 3;
@@ -63,6 +91,10 @@ window.__ModuleLoader__.load({
 		const STATUS_URL = "/@dsh-external/dsh-dialogue-alert-message/api/status";
 		const USAGE_URL = "/@dsh-external/dsh-dialogue-alert-message/api/usage";
 		const ALARM_URL = "/@dsh-external/dsh-dialogue-alert-message/api/alarm";
+		/** 文本样式：可见文案与「隐藏测量节点」必须逐字一致，量出来的自然宽才可信。 */
+		const TEXT_FONT_FAMILY = "Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"PingFang SC\", \"Microsoft YaHei\", sans-serif";
+		const TEXT_FONT_SIZE = 12;
+		const TEXT_PADDING_X = 10;
 		/** 音色映射：single 单音 / double 双脉冲 / triple 三连（本地降级发声按等级区分严重度）。 */
 		const SOUND_PATTERNS = {
 			single: [660],
@@ -110,10 +142,10 @@ window.__ModuleLoader__.load({
 				order: 10
 			}, DialogueAlertBar));
 		}
-		function RunningIcon() {
+		function RunningIcon(size = 18) {
 			return (0, react.createElement)("svg", {
-				width: 18,
-				height: 18,
+				width: size,
+				height: size,
 				viewBox: "0 0 24 24",
 				fill: "none",
 				stroke: "currentColor",
@@ -183,6 +215,54 @@ window.__ModuleLoader__.load({
 					clearInterval(timer);
 				};
 			}, []);
+			const rootRef = (0, react.useRef)(null);
+			const measureRef = (0, react.useRef)(null);
+			const [compact, setCompact] = (0, react.useState)(false);
+			const text = statusTextOf(usage);
+			(0, react.useEffect)(() => {
+				if (!wide) return;
+				const rowOf = (el) => {
+					let cur = el?.parentElement ?? null;
+					while (cur) {
+						if (getComputedStyle(cur).display !== "contents") return cur;
+						cur = cur.parentElement;
+					}
+					return null;
+				};
+				const flexItemsOf = (row) => {
+					const out = [];
+					const walk = (el) => {
+						for (const child of Array.from(el.children)) if (getComputedStyle(child).display === "contents") walk(child);
+						else out.push(child);
+					};
+					walk(row);
+					return out;
+				};
+				const decide = () => {
+					const root = rootRef.current;
+					const row = rowOf(root);
+					if (!root || !row) return;
+					const required = (measureRef.current?.offsetWidth ?? 0) + TEXT_PADDING_X * 2;
+					let used = 0;
+					for (const item of flexItemsOf(row)) if (item !== root) used += item.offsetWidth;
+					const free = availableForText(row.clientWidth, used);
+					setCompact((prev) => shouldCompact({
+						free,
+						required,
+						wasCompact: prev
+					}));
+				};
+				decide();
+				const observer = new ResizeObserver(decide);
+				const row = rowOf(rootRef.current);
+				if (row) {
+					observer.observe(row);
+					for (const item of flexItemsOf(row)) observer.observe(item);
+				}
+				return () => {
+					observer.disconnect();
+				};
+			}, [wide, text]);
 			if (!wide) return (0, react.createElement)("button", {
 				type: "button",
 				title: "对话运行状态：运行中，点击展开侧边栏",
@@ -202,17 +282,56 @@ window.__ModuleLoader__.load({
 					cursor: "pointer"
 				}
 			}, RunningIcon());
-			return (0, react.createElement)("div", { style: {
-				padding: "6px 10px",
-				fontSize: 12,
-				lineHeight: "18px",
-				color: "var(--al-text2, #9AA3B2)",
-				fontFamily: "Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
-				fontVariantNumeric: "tabular-nums",
-				whiteSpace: "nowrap",
-				overflow: "hidden",
-				textOverflow: "ellipsis"
-			} }, statusTextOf(usage));
+			const measureNode = (0, react.createElement)("span", {
+				ref: measureRef,
+				"aria-hidden": true,
+				style: {
+					position: "absolute",
+					left: "-99999px",
+					top: 0,
+					visibility: "hidden",
+					whiteSpace: "nowrap",
+					fontSize: TEXT_FONT_SIZE,
+					fontFamily: TEXT_FONT_FAMILY,
+					fontVariantNumeric: "tabular-nums"
+				}
+			}, text);
+			if (compact) {
+				const tone = counts.error > 0 ? "#F87171" : counts.running > 0 ? "#60A5FA" : "var(--al-text2, #9AA3B2)";
+				return (0, react.createElement)("div", {
+					ref: rootRef,
+					title: `对话运行状态：${text}（同行插件占满底部行，已收起为图标；悬停查看完整数据）`,
+					"aria-label": `对话运行状态：${text}`,
+					style: {
+						flex: "0 0 auto",
+						minWidth: 0,
+						width: 12,
+						height: 32,
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						color: tone,
+						overflow: "hidden"
+					}
+				}, RunningIcon(12), measureNode);
+			}
+			return (0, react.createElement)("div", {
+				ref: rootRef,
+				title: `对话运行状态：${text}`,
+				style: {
+					flex: "0 0 auto",
+					minWidth: 0,
+					padding: `6px ${TEXT_PADDING_X}px`,
+					fontSize: TEXT_FONT_SIZE,
+					lineHeight: "18px",
+					color: "var(--al-text2, #9AA3B2)",
+					fontFamily: TEXT_FONT_FAMILY,
+					fontVariantNumeric: "tabular-nums",
+					whiteSpace: "nowrap",
+					overflow: "hidden",
+					textOverflow: "ellipsis"
+				}
+			}, text, measureNode);
 		}
 		//#endregion
 		exports.apply = apply;

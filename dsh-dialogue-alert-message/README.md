@@ -5,7 +5,7 @@
 报警走本插件**自包含**通道（宿主内部队列 `/api/alarm` → 本插件客户端 WebAudio 发声 + ack），
 **不与其他任何插件交互**。
 
-- 当前版本：`0.2.2`（`package.json`；本轮按用户指令去掉状态栏的「当日: X.XX元」）
+- 当前版本：`0.2.3`（`package.json`；本轮按用户指令修「底部行被同行插件占满导致状态栏被压成残条」）
 - 形态：宿主半 `src/index.ts` + 客户端半 `src/client/index.ts`（插槽 `sidebar.footer.action`，`order: 10`）
 - 配套文件：`SPEC.md`（设计说明）、`integration-check.mjs`（宿主全链路检查）
 - 客户端注入：`['slots']`（`src/client/index.ts:21`）
@@ -23,6 +23,19 @@
 > v0.2.2 起**不再上屏「当日: X.XX元」**（用户指令 2026-10-11）。当日消耗仍在 `/api/usage`
 > 与 `stats.json` 中保留，只是不展示。文案由纯函数 `statusTextOf`（`src/lib/usage-stats.ts`）
 > 唯一给出，单测钉住三态 + 负面断言（任何输入都不含「当日」）。
+
+> v0.2.3 起**按可用宽度自适应**（用户指令 2026-10-14）。`sidebar.footer.action` 是**共享的一行
+> flex**：DSH 内置 Cordis 行的根节点 `flex: 0 0 auto; width: 100%` 会占满整行，本插件曾被压成
+> `width: 0`（真机实测：行 256px、Cordis 层 256px、本插件 clientWidth 20 / scrollWidth 169，
+> 文案只剩残条）。现在实测「本插件可用宽度 vs 文案所需宽度」：
+>
+> - 放得下 → 显示全文；
+> - 放不下（含量不出来）→ 降级为 **12px 紧凑图标**，完整数据进 `title` / `aria-label`；
+> - **始终为自己预留那 12px**（`availableForText` 先扣自身占位）⇒ 判定与自身当前形态无关，
+>   不会反过来把同行插件挤小；空间恢复后自动回到全文；
+> - 12px 的由来：真机几何 footerActions 右边界 268 / 侧栏右边界 280 ⇒ 行尾完全可见的最大宽度。
+>
+> 判定在纯函数 `availableForText` / `shouldCompact`（`src/lib/footer-fit.ts`，7 例单测）。
 
 - `tabular-nums`、金额两位小数；折叠态只显示一个运行状态图标按钮（点击展开侧边栏，`:200-222`）。
 - 缺失态：首次加载未完成 → 对话数与余额都是 `--`；余额从无成功记录 → 仅余额 `--`；

@@ -1,6 +1,6 @@
 {
   "name": "@dsh-external/dsh-dialogue-alert-message",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Monitor DSH dialogue execution states, alert on forced interruptions (tool error / forced cancel / session eviction / host restart) with per-level sounds, and show DeepSeek account usage (count/balance) in the sidebar",
   "private": true,
   "type": "module",

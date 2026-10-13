@@ -75,7 +75,7 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 | --- | --- | --- | --- | --- |
 | ⚡ 闪电追加 | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.2 | 输入框「快速追加」按钮 + 预存命令菜单与编辑弹窗 |
 | 🧩 一键派活 | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | 向宿主注册 `ptc_task` 工具，把整件事交给 PTC 作用域子代理 |
-| 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.2 | 对话中断分级报警 + 侧栏对话数与余额显示 |
+| 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.3 | 对话中断分级报警 + 侧栏对话数与余额显示（空间不够自动收成图标） |
 
 ### ⚡ 闪电追加 · [详细说明](dsh-quick-append/README.md)
 
@@ -110,7 +110,7 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 
 - 对话正常完成播「叮咚」；被**非用户主动**原因中断时按等级播报警音（工具报错 / 强制取消 / 会话驱逐 / 宿主重启）。
 - 只对非主动中断报警：你按的取消不会响。
-- 侧栏状态栏显示 DeepSeek 账号用量：对话数 / 余额（v0.2.2 起不再显示「当日花费」，数据仍在 `/api/usage` 中保留）。
+- 侧栏状态栏显示 DeepSeek 账号用量：对话数 / 余额（v0.2.2 起不再显示「当日花费」，数据仍在 `/api/usage` 中保留）。**v0.2.3 起按可用宽度自适应**：底部动作行被同行插件（如 DSH 内置 Cordis 行）占满时自动收成 12px 图标，完整数据进悬停提示，空间恢复自动还原——不会反过来挤压同行插件。
 - 报警走本插件自包含通道（宿主队列 `/api/alarm` → 客户端 WebAudio + ack），不依赖任何第三方插件。
 
 ## 先看这条坑（否则可能整个 dsh-web 起不来）

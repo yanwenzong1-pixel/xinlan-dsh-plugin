@@ -39,6 +39,11 @@
   文案由纯函数 `statusTextOf`（`src/lib/usage-stats.ts`）唯一给出，单测钉住三态与负面断言；
   `font-variant-numeric: tabular-nums`；缺失态 `--` 占位；禁止 `undefined/NaN/null/原始错误`。
 - 轮询：1s（status + usage 并行，任一失败互不影响）；不新增窗口/菜单/按钮（交互语义零变更）。
+- **空间自适应（v0.2.3）**：`sidebar.footer.action` 是共享行（DSH 内置 Cordis 行根节点
+  `flex:0 0 auto; width:100%` 会占满整行）。实测可用宽度 `availableForText(rowWidth, usedBySiblings)`
+  —— **始终先扣掉自身 12px 占位**，以消除「自己已展开 → 挤小同行 → 看起来还有空间」的自我循环 ——
+  小于文案所需宽度时渲染 12px 紧凑图标（完整数据在 `title`/`aria-label`），空间恢复自动回到全文；
+  `ResizeObserver` 观察该行与同行各占位者（`display: contents` 包装层需展平后再算占用）。
 
 ## 5. 容错
 
@@ -49,7 +54,7 @@
 
 ## 6. 验收标准
 
-- [ ] `node --test test/` 全绿（当前 63 例：用量统计/中断分类/报警回放/宿主链路/产物形状）
+- [ ] `node --test test/` 全绿（当前 70 例：用量统计/状态栏文案/底部空间判定/中断分类/报警回放/宿主链路/产物形状）
 - [ ] `dev_reload_package` 后 fiber active，`/api/usage` 返回 `{ok:true,data:{...}}`
 - [ ] `/api/status` 行为不变
 - [ ] 浏览器硬刷新（Ctrl+F5）后状态栏显示精确文案、数字 tabular-nums、余额失败时 `--`
@@ -59,6 +64,7 @@
 
 | 日期 | 版本 | 变更 |
 |---|---|---|
+| 2026-10-14 | v0.2.3 | **状态栏按可用宽度自适应（用户指令）**：修「DSH 内置 Cordis 行占满 footer 行 ⇒ 本插件被压成 `width:0`、文案只剩残条（真机：clientWidth 20 / scrollWidth 169）」。实测可用宽度不足即降级为 12px 紧凑图标（完整数据进 `title`/`aria-label`），并始终为自身预留 12px 占位以免反过来挤压同行；`ResizeObserver` 观察该行与同行占位者，空间恢复自动还原全文。新增纯函数 `availableForText`/`shouldCompact` + 7 例单测 |
 | 2026-10-11 | v0.2.2 | **状态栏去掉「当日: {X.XX}元」（用户指令）**：宽态/占位态文案改由纯函数 `statusTextOf` 唯一给出 + 单测钉住（含「任何输入都不含当日」的负面断言）；`todayCost` 的采集/持久化/`/api/usage` 输出全部保留，仅不再上屏 |
 | 2026-09-05 | v0.2.1 | **自包含化（用户指令）**：移除全部 alert-hub 对接——发声仅经本插件内部队列 `/api/alarm` → 客户端 WebAudio（音色/音量/时长按等级），本插件不与任何其他插件交互；alarm.log/门控/去重/结构化日志不变；同步回滚 xllh-alert-hub（恢复仅高危发声，见其 v0.3.13） |
 | 2026-09-05 | v0.2.0 | 强制中断报警：中断原因枚举（tool-error/forced-cancel/session-evicted/host-restart，注册式扩展）+ 归一化分类（turn/end、恢复种子、销毁开放轮）+ 幂等去重（持久化）+ 门控（总开关/全静音/等级过滤/免打扰，clamp+持久化+即时生效 + `/api/alarm-settings`）+ 内部通知 `/api/alarm` + 客户端音色播放/ack + 结构化报警日志（alarm.log JSONL）；客户端错误音移除（用户主动取消静默）；映射纯函数单测 + 集成场景 4/5 |

@@ -12,6 +12,7 @@
 import { createElement, useEffect, useRef, useState } from 'react'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { statusTextOf } from '../lib/usage-stats.js'
+import { COMPACT_ICON_WIDTH_PX, availableForText, shouldCompact } from '../lib/footer-fit.js'
 import { replayDecision, REPLAY_MAP_CAP } from '../lib/alarm-replay.js'
 
 type ClientContext = {
@@ -23,6 +24,11 @@ export const inject = ['slots']
 const STATUS_URL = '/@dsh-external/dsh-dialogue-alert-message/api/status'
 const USAGE_URL = '/@dsh-external/dsh-dialogue-alert-message/api/usage'
 const ALARM_URL = '/@dsh-external/dsh-dialogue-alert-message/api/alarm'
+
+/** 文本样式：可见文案与「隐藏测量节点」必须逐字一致，量出来的自然宽才可信。 */
+const TEXT_FONT_FAMILY = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif'
+const TEXT_FONT_SIZE = 12
+const TEXT_PADDING_X = 10
 
 interface Counts {
   running: number
@@ -111,12 +117,12 @@ export function apply(ctx: ClientContext): void {
   }, DialogueAlertBar))
 }
 
-function RunningIcon() {
+function RunningIcon(size = 18) {
   return createElement(
     'svg',
     {
-      width: 18,
-      height: 18,
+      width: size,
+      height: size,
       viewBox: '0 0 24 24',
       fill: 'none',
       stroke: 'currentColor',
@@ -197,6 +203,62 @@ function DialogueAlertBar({ wide, toggleSidebar }: { wide: boolean; toggleSideba
     }
   }, [])
 
+  // 底部动作行是**共享的一行 flex**：DSH 内置 Cordis 行根节点 `flex:0 0 auto; width:100%`
+  // 会占满整行（2026-10-13 真机实测：行 256px、Cordis 层 256px、本插件被压成 clientWidth 20 /
+  // scrollWidth 169）。这里实测「本插件可用宽度 vs 文案所需宽度」，装不下就降级成紧凑图标
+  // （完整文案进 title 悬停可见），空间回来后自动恢复；判定在纯函数 shouldCompact（有单测）。
+  const rootRef = useRef<HTMLDivElement>(null)
+  const measureRef = useRef<HTMLSpanElement>(null)
+  const [compact, setCompact] = useState(false)
+  const text = statusTextOf(usage)
+
+  useEffect(() => {
+    if (!wide) return
+    // 两个坑（真机踩到，2026-10-14）：
+    // ① 直接父节点是 slot 的 `display: contents` 包装层（clientWidth 恒 0）⇒ 必须向上找真正有盒子的行；
+    // ② 同一个 slot 的**所有占位者**都塞在同一个 `display: contents` 容器里 ⇒ 算「被占用宽度」时
+    //    必须把 contents 后代展平成 flex 项，否则会把同行的 Cordis 行整块漏算，误判成"有空间"。
+    const rowOf = (el: HTMLElement | null): HTMLElement | null => {
+      let cur = el?.parentElement ?? null
+      while (cur) {
+        if (getComputedStyle(cur).display !== 'contents') return cur
+        cur = cur.parentElement
+      }
+      return null
+    }
+    const flexItemsOf = (row: HTMLElement): HTMLElement[] => {
+      const out: HTMLElement[] = []
+      const walk = (el: HTMLElement): void => {
+        for (const child of Array.from(el.children) as HTMLElement[]) {
+          if (getComputedStyle(child).display === 'contents') walk(child)
+          else out.push(child)
+        }
+      }
+      walk(row)
+      return out
+    }
+    const decide = (): void => {
+      const root = rootRef.current
+      const row = rowOf(root)
+      if (!root || !row) return
+      const required = (measureRef.current?.offsetWidth ?? 0) + TEXT_PADDING_X * 2
+      let used = 0
+      for (const item of flexItemsOf(row)) {
+        if (item !== root) used += item.offsetWidth
+      }
+      const free = availableForText(row.clientWidth, used)
+      setCompact((prev) => shouldCompact({ free, required, wasCompact: prev }))
+    }
+    decide()
+    const observer = new ResizeObserver(decide)
+    const row = rowOf(rootRef.current)
+    if (row) {
+      observer.observe(row)
+      for (const item of flexItemsOf(row)) observer.observe(item)
+    }
+    return () => { observer.disconnect() }
+  }, [wide, text])
+
   if (!wide) {
     return createElement(
       'button',
@@ -221,19 +283,63 @@ function DialogueAlertBar({ wide, toggleSidebar }: { wide: boolean; toggleSideba
     )
   }
 
+  // 隐藏测量节点：始终渲染，给出文案自然宽（不受当前是否已被挤压影响）。
+  const measureNode = createElement('span', {
+    ref: measureRef,
+    'aria-hidden': true,
+    style: {
+      position: 'absolute',
+      left: '-99999px',
+      top: 0,
+      visibility: 'hidden',
+      whiteSpace: 'nowrap',
+      fontSize: TEXT_FONT_SIZE,
+      fontFamily: TEXT_FONT_FAMILY,
+      fontVariantNumeric: 'tabular-nums',
+    },
+  }, text)
+
+  // 空间不足：降级为紧凑图标（可完全落在侧栏右内侧，不被裁切），完整数据放 title。
+  if (compact) {
+    const tone = counts.error > 0 ? '#F87171' : counts.running > 0 ? '#60A5FA' : 'var(--al-text2, #9AA3B2)'
+    return createElement(
+      'div',
+      {
+        ref: rootRef,
+        title: `对话运行状态：${text}（同行插件占满底部行，已收起为图标；悬停查看完整数据）`,
+        'aria-label': `对话运行状态：${text}`,
+        style: {
+          flex: '0 0 auto',
+          minWidth: 0,
+          width: COMPACT_ICON_WIDTH_PX,
+          height: 32,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: tone,
+          overflow: 'hidden',
+        },
+      },
+      RunningIcon(COMPACT_ICON_WIDTH_PX),
+      measureNode,
+    )
+  }
+
   // 缺失态占位：首次加载未完成 → 全部 '--'；余额未知/刷新失败 → 仅余额 '--'。
   // 文案由纯函数 statusTextOf 统一给出（单测钉住；v0.2.2 起不再含「当日」）。
-  const text = statusTextOf(usage)
-
   return createElement(
     'div',
     {
+      ref: rootRef,
+      title: `对话运行状态：${text}`,
       style: {
-        padding: '6px 10px',
-        fontSize: 12,
+        flex: '0 0 auto',
+        minWidth: 0,
+        padding: `6px ${TEXT_PADDING_X}px`,
+        fontSize: TEXT_FONT_SIZE,
         lineHeight: '18px',
         color: 'var(--al-text2, #9AA3B2)',
-        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif',
+        fontFamily: TEXT_FONT_FAMILY,
         fontVariantNumeric: 'tabular-nums',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -241,5 +347,6 @@ function DialogueAlertBar({ wide, toggleSidebar }: { wide: boolean; toggleSideba
       },
     },
     text,
+    measureNode,
   )
 }
