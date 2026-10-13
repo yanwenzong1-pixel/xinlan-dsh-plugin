@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-0.1.5--rc.1-4f46e5.svg)](#环境要求)
 [![无需构建](https://img.shields.io/badge/install-no%20build%20required-brightgreen.svg)](#快速上手约-1-分钟)
+
 [English](README.en.md) · 中文
 
 `DSH 插件` · `DeepSeek Harness` · `DeepSeek 外部插件` · `cordis patch bundle` · `AI Agent 提效` · `子代理任务派发`
