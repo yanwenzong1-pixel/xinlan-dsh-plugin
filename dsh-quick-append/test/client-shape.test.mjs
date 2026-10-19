@@ -147,7 +147,8 @@ test('P1: package declares web client platform and ./client export', () => {
 test('freeze: z 值集合与叶子登记的层级一致（新增层级必须先登记）', () => {
   // 项目 z 寄存器基线为 2147483000（L1..L8）；本插件自带一套局部队列（远低于分级线，
   // 只承诺"高于输入区与自己的既有弹层"，跨插件层级另有 ALIGN 评估项）：
-  //   100 = 既有「点击追加」弹层（v0.4.x 起登记为 ALIGN-10）
+  //   100 = 既有「点击追加」弹层（v0.4.x 起登记为 ALIGN-10；v0.5.3 起经 portal 挂到 body + fixed，
+  //         层级不变 —— 挂到 body 后才真正参与根层叠，见 .dsh-qa-panel 注释）
   //   110 = v0.5.0「预存命令」上拉菜单 / 编辑弹窗遮罩（登记为 ALIGN-11）
   //   111 = v0.5.0 编辑弹窗面板（必须高于自己的遮罩，否则第一下点在遮罩上）
   // 判据：CSS 模板里的字面量必须与叶子 command-store.ts 的 COMMAND_LAYER 逐个对上 ——

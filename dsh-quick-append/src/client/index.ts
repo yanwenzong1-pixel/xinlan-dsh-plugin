@@ -57,6 +57,8 @@ import {
 import {
   type OptimizeImagePayload,
 } from '../lib/optimize.js'
+// 「快捷追加文案」面板的放置计算（纯函数叶子；2026-10-19 修「被边栏压住 / 窄窗跑出屏幕」）。
+import { panelPlacementOf } from '../lib/panel-placement.js'
 import {
   planImage,
   buildPreprocessNote,
@@ -186,6 +188,9 @@ const ICON_SVG_PROPS = {
  */
 const DIALOG_MAX_HEIGHT = 'min(86vh, ' + String(COMMAND_DIALOG_HEIGHT) + 'px)'
 
+/** 「快捷追加文案」面板高度上限：矮视口下不把底部按钮顶出视口（与弹窗同一套预算思路）。 */
+const PANEL_MAX_HEIGHT = 'min(80vh, 420px)'
+
 // 旧版全局默认文案常量 DEFAULT_PRESET 已移入 src/lib/preset-store.ts（DEFAULT_APPEND_TEXT）。
 
 
@@ -216,6 +221,17 @@ const SKIN_CSS = `
     0 16px 48px rgba(5,8,12,0.35);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+/* 「快捷追加文案」面板：与菜单/弹窗同一策略 —— portal 到 body + fixed 定位。
+   2026-10-19 用户反馈：原实现是 composer 内的 absolute + z=100，被困在 composer 的层叠
+   上下文里 ⇒ 会被边栏 / 应用浮层（overlayLayer z=20）压住；窄窗（900×700）实测 left=-91 直接
+   跑到屏幕外。挂到 body 后它才真正参与根层叠（100 > overlayLayer 20 / tabCell 10），层级沿用
+   既有 .dsh-qa-popover 的 100（不新增 z 值，登记表不动）。位置由叶子 panelPlacementOf 计算，
+   样式仍走 layerStyleOf 唯一出口。 */
+.dsh-qa-panel {
+  position: fixed;
+  right: auto;
+  bottom: auto;
 }
 .dsh-qa-title {
   margin: 0 0 8px;
@@ -989,6 +1005,8 @@ async function prepareImages(attachments: readonly { file: File }[]): Promise<{ 
 function QuickAppendButton({ useInput, useSession, useWorkspaces, inputActions, sessionId }: QuickAppendProps) {
   const [toastSlot, setToastSlot] = useState<ToastSlot | null>(null)
   const [editing, setEditing] = useState(false)
+  // 面板的 fixed 放置（打开时按触发区算一次；编辑期间窗口尺寸变化重算）。
+  const [panelLine, setPanelLine] = useState<{ left: number; top: number | null; bottom: number | null; width: number } | null>(null)
   const [presetDraft, setPresetDraft] = useState('')
   const [llmEnabled, setLlmEnabled] = useState(true)
   const [goalMode, setGoalMode] = useState(true)
@@ -1577,6 +1595,30 @@ function QuickAppendButton({ useInput, useSession, useWorkspaces, inputActions, 
     setEditing(true)
   }, [presetWorkspaceKey])
 
+  /** 按触发区当前矩形算面板的 fixed 放置（窗口 resize 时也走这里）。 */
+  const placePanel = useCallback((): void => {
+    const box = boxRef.current
+    if (box === null) {
+      setPanelLine(null)
+      return
+    }
+    const rect = box.getBoundingClientRect()
+    setPanelLine(panelPlacementOf({
+      right: rect.right,
+      bottom: rect.bottom,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    }))
+  }, [])
+
+  // 打开时算一次；编辑期间跟随窗口尺寸变化重算（面板已不在 composer 的流里，不能靠 CSS 自适应）。
+  useEffect(() => {
+    if (!editing) return
+    placePanel()
+    window.addEventListener('resize', placePanel)
+    return () => window.removeEventListener('resize', placePanel)
+  }, [editing, placePanel])
+
   const save = useCallback(() => {
     // 只提交，不在这里宣告成功：真正落盘由合并写入器完成，成功/失败的提示都来自**真实落盘结果**
     //（先喊"已保存"再写盘失败，就是骗用户 —— 写盘可能在 250ms 合并窗口之后才失败）。
@@ -1657,41 +1699,12 @@ function QuickAppendButton({ useInput, useSession, useWorkspaces, inputActions, 
     style: ICON_BUTTON_STYLE,
   }
 
-  return createElement(
-    'div',
-    { ref: boxRef, style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 4 } },
-    // 按钮对：间距 5px 由容器的 flex gap 提供（需求 2.1），不做绝对定位。
-    createElement(
-      'div',
-      { className: 'dsh-qa-tools' },
-      createElement(
-        'button',
-        commandButtonProps,
-        createElement('svg', ICON_SVG_PROPS, createElement('path', { d: WRENCH_PATH })),
-      ),
-      createElement(
-        'button',
-        appendButtonProps,
-        createElement('svg', ICON_SVG_PROPS, createElement('path', { d: BOLT_PATH })),
-      ),
-    ),
-    toastSlot === null ? null : createElement('span', { style: { fontSize: 11, color: 'var(--al-text2, #9AA3B2)' } }, toastSlot.text),
-    // 常驻任务态 toast：优化中（固定文案 + 旋转指示）/ 优化完成（短暂成功态）。
-    // 与组件同生命周期：卸载即随 DOM 移除（无孤立节点）；计时仅存在于完成态 effect。
-    optimizeToast !== null && optimizeToast.kind !== 'idle'
-      ? createElement(
-          'span',
-          { className: 'dsh-qa-opt' + (optimizeToast.kind === 'done' ? ' done' : '') },
-          optimizeToast.kind === 'optimizing'
-            ? createElement('span', { className: 'dsh-qa-opt-spin', 'aria-hidden': true })
-            : null,
-          optimizeToast.kind === 'optimizing' ? OPTIMIZING_TOAST : DONE_TOAST,
-        )
-      : null,
-    editing
-      ? createElement(
+  // 「快捷追加文案」面板：portal 到 body + fixed 定位（2026-10-19；层级/定位理由见 .dsh-qa-panel 注释）。
+  // 面板已不在 composer 的流里，位置由叶子 panelPlacementOf 计算，样式走 layerStyleOf 唯一出口。
+  const editorPanel = editing && panelLine !== null
+    ? createElement(
           'div',
-          { className: 'dsh-qa-popover' },
+          { className: 'dsh-qa-popover dsh-qa-panel', style: layerStyleOf(panelLine, panelLine.width, PANEL_MAX_HEIGHT) },
           createElement('div', { className: 'dsh-qa-title' }, '快捷追加文案'),
           createElement(
             'textarea',
@@ -1766,6 +1779,39 @@ function QuickAppendButton({ useInput, useSession, useWorkspaces, inputActions, 
             ),
           ),
         )
+
+    : null
+
+  return createElement(
+    'div',
+    { ref: boxRef, style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 4 } },
+    // 按钮对：间距 5px 由容器的 flex gap 提供（需求 2.1），不做绝对定位。
+    createElement(
+      'div',
+      { className: 'dsh-qa-tools' },
+      createElement(
+        'button',
+        commandButtonProps,
+        createElement('svg', ICON_SVG_PROPS, createElement('path', { d: WRENCH_PATH })),
+      ),
+      createElement(
+        'button',
+        appendButtonProps,
+        createElement('svg', ICON_SVG_PROPS, createElement('path', { d: BOLT_PATH })),
+      ),
+    ),
+    toastSlot === null ? null : createElement('span', { style: { fontSize: 11, color: 'var(--al-text2, #9AA3B2)' } }, toastSlot.text),
+    // 常驻任务态 toast：优化中（固定文案 + 旋转指示）/ 优化完成（短暂成功态）。
+    // 与组件同生命周期：卸载即随 DOM 移除（无孤立节点）；计时仅存在于完成态 effect。
+    optimizeToast !== null && optimizeToast.kind !== 'idle'
+      ? createElement(
+          'span',
+          { className: 'dsh-qa-opt' + (optimizeToast.kind === 'done' ? ' done' : '') },
+          optimizeToast.kind === 'optimizing'
+            ? createElement('span', { className: 'dsh-qa-opt-spin', 'aria-hidden': true })
+            : null,
+          optimizeToast.kind === 'optimizing' ? OPTIMIZING_TOAST : DONE_TOAST,
+        )
       : null,
     // ── 预存命令浮层：portal 到 body（composer 的 overflow/backdrop-filter 裁不到，需求 3.6）──
     // 左键菜单（上拉）与编辑弹窗（遮罩 + 面板）在这里渲染；同一时刻只有一个（互斥见各打开路径）。
@@ -1773,6 +1819,7 @@ function QuickAppendButton({ useInput, useSession, useWorkspaces, inputActions, 
       createElement(
         'div',
         { className: 'dsh-qa-portal-root' },
+        editorPanel,
         menuOpen && menuLine !== null
           ? createElement(
               'div',

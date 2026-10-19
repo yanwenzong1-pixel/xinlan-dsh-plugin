@@ -73,7 +73,7 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 
 | 别名 | 目录 | 包名 | 版本 | 一句话 |
 | --- | --- | --- | --- | --- |
-| ⚡ 闪电追加 | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.2 | 输入框「快速追加」按钮 + 预存命令菜单与编辑弹窗 |
+| ⚡ 闪电追加 | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.3 | 输入框「快速追加」按钮 + 预存命令菜单与编辑弹窗（弹窗挂在 body，不被侧栏压住） |
 | 🧩 一键派活 | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | 向宿主注册 `ptc_task` 工具，把整件事交给 PTC 作用域子代理 |
 | 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.3 | 对话中断分级报警 + 侧栏对话数与余额显示（空间不够自动收成图标） |
 

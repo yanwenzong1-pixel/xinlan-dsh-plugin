@@ -72,7 +72,7 @@ Then run `pnpm install` once inside that profile directory and restart dsh web.
 
 | Alias | Directory | Package | Version | One-liner |
 | --- | --- | --- | --- | --- |
-| ⚡ Quick Append | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.2 | Composer "quick append" button plus a stored-command menu and editor dialog |
+| ⚡ Quick Append | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.3 | Composer "quick append" button plus a stored-command menu and editor dialog (the dialog is portaled to body, no longer covered by the sidebar) |
 | 🧩 PTC Task | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | Registers the `ptc_task` tool: hand a whole job to a PTC-scoped subagent |
 | 🔔 Dialogue Alert | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.3 | Severity-based interruption alarms plus conversation count / balance (collapses to an icon when space runs out) |
 

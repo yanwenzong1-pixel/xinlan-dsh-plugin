@@ -95,6 +95,32 @@ window.__ModuleLoader__.load({
 			if (candidate.hasAttribute("data-composer-input")) return true;
 			return candidate.tagName.toUpperCase() === COMPOSER_LEGACY_TAG;
 		}
+		/** 夹取到 [min, max]；当 max < min（视口比面板还窄）时以 min 为准。 */
+		function clamp(value, min, max) {
+			if (max < min) return min;
+			return Math.min(Math.max(value, min), max);
+		}
+		/**
+		* 算出面板的 fixed 放置。
+		* - 宽度：`min(PANEL_WIDTH, 可用宽度)`，下限 PANEL_MIN_WIDTH（可用宽度更小时以可用宽度为准）；
+		* - 左边界：右对齐触发区后夹进 `[margin, vw - width - margin]`；
+		* - bottom 偏移：`vh - (触发区底边 - OFFSET)`，夹进 `[margin, vh - margin]`。
+		* 任何非有限输入都退回安全值（宁可靠边显示，也不产出 NaN 样式）。
+		*/
+		function panelPlacementOf(anchor) {
+			const vw = Number.isFinite(anchor?.viewportWidth) && anchor.viewportWidth > 0 ? anchor.viewportWidth : 1024;
+			const vh = Number.isFinite(anchor?.viewportHeight) && anchor.viewportHeight > 0 ? anchor.viewportHeight : 768;
+			const right = Number.isFinite(anchor?.right) ? anchor.right : 8;
+			const triggerBottom = Number.isFinite(anchor?.bottom) ? anchor.bottom : vh - 8;
+			const usable = vw - 16;
+			const width = Math.max(Math.min(160, usable), Math.min(320, usable));
+			return {
+				left: clamp(right - width, 8, vw - width - 8),
+				top: null,
+				bottom: clamp(vh - (triggerBottom - 32), 8, vh - 8),
+				width
+			};
+		}
 		/** 重编码最长边像素上限。 */
 		const REENCODE_MAX_DIMENSION = 2048;
 		/** 重编码 JPEG 质量。 */
@@ -816,6 +842,8 @@ window.__ModuleLoader__.load({
 		* 像素上限取叶子常量 —— 定位估算与实际样式同源，避免"估算 460、实际 86vh"导致越界。
 		*/
 		const DIALOG_MAX_HEIGHT = "min(86vh, " + String(460) + "px)";
+		/** 「快捷追加文案」面板高度上限：矮视口下不把底部按钮顶出视口（与弹窗同一套预算思路）。 */
+		const PANEL_MAX_HEIGHT = "min(80vh, 420px)";
 		const SKIN_CSS = `
 .dsh-qa-popover {
   position: absolute;
@@ -843,6 +871,17 @@ window.__ModuleLoader__.load({
     0 16px 48px rgba(5,8,12,0.35);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+/* 「快捷追加文案」面板：与菜单/弹窗同一策略 —— portal 到 body + fixed 定位。
+   2026-10-19 用户反馈：原实现是 composer 内的 absolute + z=100，被困在 composer 的层叠
+   上下文里 ⇒ 会被边栏 / 应用浮层（overlayLayer z=20）压住；窄窗（900×700）实测 left=-91 直接
+   跑到屏幕外。挂到 body 后它才真正参与根层叠（100 > overlayLayer 20 / tabCell 10），层级沿用
+   既有 .dsh-qa-popover 的 100（不新增 z 值，登记表不动）。位置由叶子 panelPlacementOf 计算，
+   样式仍走 layerStyleOf 唯一出口。 */
+.dsh-qa-panel {
+  position: fixed;
+  right: auto;
+  bottom: auto;
 }
 .dsh-qa-title {
   margin: 0 0 8px;
@@ -1561,6 +1600,7 @@ window.__ModuleLoader__.load({
 		function QuickAppendButton({ useInput, useSession, useWorkspaces, inputActions, sessionId }) {
 			const [toastSlot, setToastSlot] = (0, react.useState)(null);
 			const [editing, setEditing] = (0, react.useState)(false);
+			const [panelLine, setPanelLine] = (0, react.useState)(null);
 			const [presetDraft, setPresetDraft] = (0, react.useState)("");
 			const [llmEnabled, setLlmEnabled] = (0, react.useState)(true);
 			const [goalMode, setGoalMode] = (0, react.useState)(true);
@@ -2107,6 +2147,27 @@ window.__ModuleLoader__.load({
 				setCommandDialogOpen(false);
 				setEditing(true);
 			}, [presetWorkspaceKey]);
+			/** 按触发区当前矩形算面板的 fixed 放置（窗口 resize 时也走这里）。 */
+			const placePanel = (0, react.useCallback)(() => {
+				const box = boxRef.current;
+				if (box === null) {
+					setPanelLine(null);
+					return;
+				}
+				const rect = box.getBoundingClientRect();
+				setPanelLine(panelPlacementOf({
+					right: rect.right,
+					bottom: rect.bottom,
+					viewportWidth: window.innerWidth,
+					viewportHeight: window.innerHeight
+				}));
+			}, []);
+			(0, react.useEffect)(() => {
+				if (!editing) return;
+				placePanel();
+				window.addEventListener("resize", placePanel);
+				return () => window.removeEventListener("resize", placePanel);
+			}, [editing, placePanel]);
 			const save = (0, react.useCallback)(() => {
 				writerRef.current?.submit(editKeyRef.current, presetDraft);
 				setEditing(false);
@@ -2172,21 +2233,10 @@ window.__ModuleLoader__.load({
 				},
 				style: ICON_BUTTON_STYLE
 			};
-			return (0, react.createElement)("div", {
-				ref: boxRef,
-				style: {
-					position: "relative",
-					display: "flex",
-					alignItems: "center",
-					gap: 4
-				}
-			}, (0, react.createElement)("div", { className: "dsh-qa-tools" }, (0, react.createElement)("button", commandButtonProps, (0, react.createElement)("svg", ICON_SVG_PROPS, (0, react.createElement)("path", { d: WRENCH_PATH }))), (0, react.createElement)("button", appendButtonProps, (0, react.createElement)("svg", ICON_SVG_PROPS, (0, react.createElement)("path", { d: BOLT_PATH })))), toastSlot === null ? null : (0, react.createElement)("span", { style: {
-				fontSize: 11,
-				color: "var(--al-text2, #9AA3B2)"
-			} }, toastSlot.text), optimizeToast !== null && optimizeToast.kind !== "idle" ? (0, react.createElement)("span", { className: "dsh-qa-opt" + (optimizeToast.kind === "done" ? " done" : "") }, optimizeToast.kind === "optimizing" ? (0, react.createElement)("span", {
-				className: "dsh-qa-opt-spin",
-				"aria-hidden": true
-			}) : null, optimizeToast.kind === "optimizing" ? OPTIMIZING_TOAST : DONE_TOAST) : null, editing ? (0, react.createElement)("div", { className: "dsh-qa-popover" }, (0, react.createElement)("div", { className: "dsh-qa-title" }, "快捷追加文案"), (0, react.createElement)("textarea", {
+			const editorPanel = editing && panelLine !== null ? (0, react.createElement)("div", {
+				className: "dsh-qa-popover dsh-qa-panel",
+				style: layerStyleOf(panelLine, panelLine.width, PANEL_MAX_HEIGHT)
+			}, (0, react.createElement)("div", { className: "dsh-qa-title" }, "快捷追加文案"), (0, react.createElement)("textarea", {
 				className: "dsh-qa-textarea",
 				value: presetDraft,
 				onChange: (event) => setPresetDraft(event.target.value),
@@ -2214,7 +2264,22 @@ window.__ModuleLoader__.load({
 				type: "button",
 				className: "dsh-qa-btn dsh-qa-btn-primary",
 				onClick: save
-			}, "保存")))) : null, layerHost === null ? null : (0, react_dom.createPortal)((0, react.createElement)("div", { className: "dsh-qa-portal-root" }, menuOpen && menuLine !== null ? (0, react.createElement)("div", {
+			}, "保存")))) : null;
+			return (0, react.createElement)("div", {
+				ref: boxRef,
+				style: {
+					position: "relative",
+					display: "flex",
+					alignItems: "center",
+					gap: 4
+				}
+			}, (0, react.createElement)("div", { className: "dsh-qa-tools" }, (0, react.createElement)("button", commandButtonProps, (0, react.createElement)("svg", ICON_SVG_PROPS, (0, react.createElement)("path", { d: WRENCH_PATH }))), (0, react.createElement)("button", appendButtonProps, (0, react.createElement)("svg", ICON_SVG_PROPS, (0, react.createElement)("path", { d: BOLT_PATH })))), toastSlot === null ? null : (0, react.createElement)("span", { style: {
+				fontSize: 11,
+				color: "var(--al-text2, #9AA3B2)"
+			} }, toastSlot.text), optimizeToast !== null && optimizeToast.kind !== "idle" ? (0, react.createElement)("span", { className: "dsh-qa-opt" + (optimizeToast.kind === "done" ? " done" : "") }, optimizeToast.kind === "optimizing" ? (0, react.createElement)("span", {
+				className: "dsh-qa-opt-spin",
+				"aria-hidden": true
+			}) : null, optimizeToast.kind === "optimizing" ? OPTIMIZING_TOAST : DONE_TOAST) : null, layerHost === null ? null : (0, react_dom.createPortal)((0, react.createElement)("div", { className: "dsh-qa-portal-root" }, editorPanel, menuOpen && menuLine !== null ? (0, react.createElement)("div", {
 				key: "command-menu",
 				ref: menuLayerRef,
 				className: "dsh-qa-popover dsh-qa-menu",

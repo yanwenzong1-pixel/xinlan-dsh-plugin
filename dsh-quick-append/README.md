@@ -7,7 +7,7 @@ DSH 输入区（composer）右侧的两个工具按钮：
 
 「LLM优化」打开时，左键会先把草稿交给宿主侧的 LLM 优化（可带图片），再把追加文案接在优化结果之后。
 
-- 当前版本：`0.5.2`（`package.json`）
+- 当前版本：`0.5.3`（`package.json`）
 - 形态：宿主半 `src/index.ts`（提供 `/@dsh-external/dsh-quick-append/api` 与 `/api/optimize`）+
   客户端半 `src/client/index.ts`（插槽 `conversation.input.right`，`order: 10`）
 - 宿主注入：`['webServer', 'llm', 'attachments']`（`src/index.ts:37`）；客户端注入 `['slots']`，
@@ -27,7 +27,12 @@ DSH 输入区（composer）右侧的两个工具按钮：
   图标属性 `ICON_SVG_PROPS` —— 尺寸/圆角/边框/颜色一致由结构保证。
 - 浮层用 `react-dom` 的 `createPortal` 挂到 `document.body`（绕开 composer 的 `overflow`/`backdrop-filter` 裁剪），
   卸载时收回宿主节点与全部全局监听；同一时刻只允许一个浮层展开（两个弹层互斥）。
-- 图层：既有「点击追加」弹层 = 100；预存命令 `COMMAND_LAYER = { menu: 110, mask: 110, dialog: 111 }`（`src/lib/command-store.ts:49`）。
+- **v0.5.3 起右键编辑面板也走同一 portal**：`position: fixed` + 位置由叶子 `panelPlacementOf` 计算
+  （右对齐触发区、底边贴触发区上方、**视口内双向夹取**）。旧实现是 composer 内的 `position: absolute`
+  （`right: 0; bottom: 32px`），被困在 composer 的层叠上下文里会被边栏/应用浮层压住，窄窗实测
+  `left = -91` 直接跑到屏幕外 —— 这两点都在 v0.5.3 修掉，层级沿用既有的 **100**（不新增 z 值）。
+- 图层：既有「点击追加」弹层 = 100（v0.5.3 起挂在 body、真正参与根层叠）；预存命令
+  `COMMAND_LAYER = { menu: 110, mask: 110, dialog: 111 }`（`src/lib/command-store.ts:49`）。
 
 ## 二、三条链路
 
@@ -221,6 +226,29 @@ node scripts/e2e-preset-commands.mjs     # 预存命令菜单/弹窗（64 项，
 
 以下为历史记录，条目按时间倒序保留原文（**注意 v0.3.0 一节里的「模型/思考强度可在设置里覆盖」
 已被 v0.3.1 的宿主策略单点取代**，勿照该节配置）。
+
+## v0.5.3 — 右键编辑面板不再被侧栏压住、窄窗不再跑出屏幕（2026-10-19）
+
+**症状（用户现场）**：点「点击追加」右键弹出的编辑面板被**右侧边栏盖在后面**，部分内容点不到。
+
+**根因（真机实测，DSH 0.2.1-rc.2）**：面板是 composer 内的 `position: absolute; right: 0; bottom: 32px;
+z-index: 100` —— `z-index` 只在 composer 自己的层叠上下文里比较，而边栏/应用浮层
+（`overlayLayer` z=20、`tabCell` z=10）在更外层，所以面板被压住；同一实现在窄窗（900×700）算出的
+`left = -91`，面板左半边直接出屏。
+
+**修法**：与菜单/弹窗走同一条路 —— `createPortal` 到 `body` + `position: fixed`，位置由新叶子
+`src/lib/panel-placement.ts` 的 `panelPlacementOf` 计算（右对齐触发区、底边贴触发区上方、视口内夹取），
+样式仍走唯一的 `layerStyleOf` 出口；层级**沿用 100**（挂到 body 后它才真正参与根层叠，
+100 > 20/10），登记表不动。
+
+**真机验证**：常规 1100×760 → 面板 `fixed`、父链 `dsh-qa-portal-root → dsh-qa-portal → body`、
+完全在视口内、三点采样全落在面板上；窄窗 700×700（右侧栏铺满整屏、与面板 320px 完全重叠）→
+采样点仍命中面板自己的 `textarea`（即压在侧栏之上）；旧实现的 `left = -91` 不再出现。
+
+**门禁**：新增 `test/panel-placement.test.mjs`（5 例：对齐/窄窗/宽度收缩/贴边/非法输入），
+`node --test` **250/250**。
+
+![修复后：700×700 窄窗下编辑面板完整可见，并压在铺满整屏的右侧边栏之上](../docs/177-quick-append-编辑面板不再被侧栏遮挡-20261019.png)
 
 ## v0.5.2 — 修复浮层溢出：菜单与编辑弹窗「装得下、够得着」（2026-10-04）
 
