@@ -3,7 +3,7 @@
 **给 DeepSeek Harness（DSH）插上更多接口 —— 4 个开箱即用的插件 + 1 套全自动派发工作流规格包，clone 完不用构建就能装。**
 
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
-[![DSH](https://img.shields.io/badge/DSH-0.1.5--rc.1-4f46e5.svg)](#环境要求)
+[![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.2-4f46e5.svg)](#环境要求)
 [![无需构建](https://img.shields.io/badge/install-no%20build%20required-brightgreen.svg)](#快速上手约-1-分钟)
 
 [English](README.en.md) · 中文
@@ -193,7 +193,7 @@ docs/                        设计与迭代记录（含界面截图与踩坑过
 
 ## 环境要求
 
-- DSH ≥ `0.1.5-rc.1`（本仓库在该版本上开发与验证；`web` profile）
+- DSH ≥ `0.2.1-rc.2`（本仓库在该版本上开发与验证；`web` profile）
 - Node.js ≥ 20；加载插件**不需要**构建，改源码才需要
 - 构建脚本是 Windows PowerShell（`scripts/build.ps1`，依赖 `$env:DSH_CHECKOUT` 或 `-Checkout` 参数）
 - 仓库不提交 `node_modules/`；`lib/` 构建产物**有意**随仓库提交
@@ -203,7 +203,7 @@ docs/                        设计与迭代记录（含界面截图与踩坑过
 
 ```powershell
 cd dsh-quick-append
-$env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"   # 或给 build.ps1 传 -Checkout
+$env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.2.1-rc.2"   # 或给 build.ps1 传 -Checkout
 npm run build     # build.ps1：建 junction → tsc 编译宿主半 → tsdown 打包客户端半
 npm test          # node --test
 

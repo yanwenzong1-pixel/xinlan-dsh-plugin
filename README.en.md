@@ -3,7 +3,7 @@
 **More ports for DeepSeek Harness (DSH) — four ready-to-use plugins plus one auto-dispatch workflow spec, no build step after cloning.**
 
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
-[![DSH](https://img.shields.io/badge/DSH-0.1.5--rc.1-4f46e5.svg)](#requirements)
+[![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.2-4f46e5.svg)](#requirements)
 [![No build](https://img.shields.io/badge/install-no%20build%20required-brightgreen.svg)](#quick-start-1-minute)
 中文 · English
 
@@ -193,7 +193,7 @@ Fixed files inside each plugin directory:
 
 ## Requirements
 
-- DSH ≥ `0.1.5-rc.1` (developed and verified on that version; `web` profile)
+- DSH ≥ `0.2.1-rc.2` (developed and verified on that version; `web` profile)
 - Node.js ≥ 20; **loading** a plugin needs no build, editing its source does
 - Build scripts are Windows PowerShell (`scripts/build.ps1`, driven by `$env:DSH_CHECKOUT` or a `-Checkout` argument)
 - `node_modules/` is not committed; the `lib/` build output **is** committed on purpose
@@ -203,7 +203,7 @@ Fixed files inside each plugin directory:
 
 ```powershell
 cd dsh-quick-append
-$env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.1.5-rc.1"   # or pass -Checkout to build.ps1
+$env:DSH_CHECKOUT = "C:\...\deepseek-harness-dsh-v0.2.1-rc.2"   # or pass -Checkout to build.ps1
 npm run build     # build.ps1: link junctions → tsc for the host half → tsdown for the client half
 npm test          # node --test
 
