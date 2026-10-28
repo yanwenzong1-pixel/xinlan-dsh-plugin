@@ -130,9 +130,13 @@ A production-tested automation workflow for DSH: **User decision → Todo mainte
 
 **🔥 Measured results (author's environment; not a general guarantee)**
 
-| Token cache hit rate 99.6% | Last 30 days: 49,320,381,740 tokens / ¥2,698.76 |
-| --- | --- |
-| ![cache hit 99.6%](dsh-auto-dispatch-specification/docs/images/cache-hit-99.6.png) | ![last 30 days usage](dsh-auto-dispatch-specification/docs/images/usage-cost-100m-tokens.png) |
+**Token cache hit rate 99.6%**
+
+![cache hit 99.6%](dsh-auto-dispatch-specification/docs/images/cache-hit-99.6.png)
+
+**Last 30 days: 49,320,381,740 tokens / ¥2,698.76**
+
+![last 30 days usage](dsh-auto-dispatch-specification/docs/images/usage-cost-100m-tokens.png)
 
 - **99.6% cache hit rate** measured in the author's DSH status bar after consistently using automated dispatch.
 - **≈ ¥5.47 per 100M tokens**: `¥2,698.76 ÷ 493.2038174 ≈ ¥5.47`, i.e. the 5–6 CNY per 100M-token range.

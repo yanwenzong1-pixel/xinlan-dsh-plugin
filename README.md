@@ -130,9 +130,13 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 
 **🔥 实测收益（作者环境，非通用承诺）**
 
-| Token 缓存命中率 99.6% | 近 30 天用量：49,320,381,740 tokens / ¥2,698.76 |
-| --- | --- |
-| ![缓存命中 99.6%](dsh-auto-dispatch-specification/docs/images/cache-hit-99.6.png) | ![近 30 天用量](dsh-auto-dispatch-specification/docs/images/usage-cost-100m-tokens.png) |
+**Token 缓存命中率 99.6%**
+
+![缓存命中 99.6%](dsh-auto-dispatch-specification/docs/images/cache-hit-99.6.png)
+
+**近 30 天用量：49,320,381,740 tokens / ¥2,698.76**
+
+![近 30 天用量](dsh-auto-dispatch-specification/docs/images/usage-cost-100m-tokens.png)
 
 - **缓存命中率 99.6%**：作者本机 DSH 状态栏实测，稳定使用自动派发后上下文复用率高。
 - **每 1 亿 token 成本约 ¥5.47**：`¥2,698.76 ÷ 493.2038174 ≈ 5.47 元/亿 token`，即 5–6 元/亿 token 口径。
