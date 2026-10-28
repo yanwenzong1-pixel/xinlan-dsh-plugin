@@ -19,6 +19,7 @@
 | 反复贴同一段提示词、同一串命令 | ⚡ **闪电追加** | 一键追加预存文案/命令，**按工作区各存各的**；配 **LLM 优化**：自动读项目说明文档＋最近 3 轮对话，把草稿补成精准需求 |
 | 想把一整件事丢给子代理，又受不了中间输出刷屏 | 🧩 **一键派活** | 子代理用 PTC（code）模式写一段程序跑完，中间输出留在程序里，**只把结论路径回给你** |
 | 长任务跑着跑着断了、花超了，事后才发现 | 🔔 **报警铃铛** | 被非主动原因中断立刻**分级响铃**；侧栏顺带显示 DeepSeek 对话数与余额 |
+| 上下文重复、token 花得快、缓存命中低 | 🧭 **全自动派发** | 用固定槽位与收据/回函纪律复用上下文；作者环境实测 **缓存命中 99.6%**、约 **¥5.47/亿 token** |
 
 四个插件都只在 DSH 侧加载，不改 DSH 源码、不碰你的会话数据；另附一套自动派发工作流规格包。
 
@@ -78,7 +79,7 @@ dsh plugin --profile web add ./dsh-anime-desktop-pet
 | ⚡ 闪电追加 | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.3 | 输入框「快速追加」按钮 + 预存命令菜单与编辑弹窗（弹窗挂在 body，不被侧栏压住） |
 | 🧩 一键派活 | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | 向宿主注册 `ptc_task` 工具，把整件事交给 PTC 作用域子代理 |
 | 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.4 | 对话中断分级报警 + 侧栏对话数与余额显示（空间不够自动收成图标；长连接推送 + 45s 兜底） |
-| 🧭 全自动派发 | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | —（工作流规格包） | v1 | 用户决策 → 待办维护 → 执行槽位的自动派发链路：两个技能、派单脚本、槽位初始化/备份/版本检查；监控 dashboard 需自建 |
+| 🧭 全自动派发 | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | —（工作流规格包） | v1 | 用户决策 → 待办维护 → 执行槽位的自动派发链路；作者环境实测缓存命中 99.6%、约 ¥5.47/亿 token；监控 dashboard 需自建 |
 | 🐟 动画桌宠（作者自用） | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.7 | 作者自己使用的简单桌宠+装饰，无推荐功能。 |
 
 ### ⚡ 闪电追加 · [详细说明](dsh-quick-append/README.md)
@@ -121,6 +122,16 @@ dsh plugin --profile web add ./dsh-anime-desktop-pet
 ### 🧭 全自动派发工作流 · [规格包](dsh-auto-dispatch-specification/README.md)
 
 把作者已经在生产里跑通的「**用户决策 → 待办维护 → 执行槽位**」自动化开发链路，打包给另一个 DSH 环境复刻。它不是普通插件，而是一套可直接落地的**工作流规格包**：技能 + 规则 + 派单脚本 + 槽位初始化/备份/版本检查。
+
+**🔥 实测收益（作者环境，非通用承诺）**
+
+| Token 缓存命中率 99.6% | 近 30 天用量：49,320,381,740 tokens / ¥2,698.76 |
+| --- | --- |
+| ![缓存命中 99.6%](dsh-auto-dispatch-specification/docs/images/cache-hit-99.6.png) | ![近 30 天用量](dsh-auto-dispatch-specification/docs/images/usage-cost-100m-tokens.png) |
+
+- **缓存命中率 99.6%**：作者本机 DSH 状态栏实测，稳定使用自动派发后上下文复用率高。
+- **每 1 亿 token 成本约 ¥5.47**：`¥2,698.76 ÷ 493.2038174 ≈ 5.47 元/亿 token`，即 5–6 元/亿 token 口径。
+- **前提**：严格使用自动派发任务；作者使用开源项目 [Ponytail](https://github.com/DietrichGebert/ponytail) 节省 token；作者全程使用 **DeepSeek V4.1-Flash**。这是作者单一环境数据，不是通用保证；上下文结构、模型价格和调度纪律都会影响结果。
 
 - **默认 7 槽拓扑**：U 用户决策（唯一入口）→ A 待办维护（唯一调度点）→ B/F 生产、C 发布、E 崩溃、G GitHub。一件活只派一个执行槽位；执行方不直接找用户，结果通过回函交回 A→U。
 - **收据才算送达**：写进 `outbox/` 只是投邮筒；必须看到 `state/<原名>.done = SENT -> <槽位>` 才算派单成功。同名文件只投一次，重发要换号。

@@ -18,6 +18,7 @@
 | Retyping the same prompt or the same command over and over | ⚡ **Quick Append** | One click appends stored text/commands, **isolated per workspace**; with **LLM optimize** it also reads your project docs + the last 3 turns and turns a rough draft into a precise request |
 | Handing a whole job to a subagent, but the intermediate output floods your context | 🧩 **PTC Task** | The subagent runs in PTC (code) mode: it writes one program, keeps the intermediate output inside it, and returns **only the path to the result** |
 | Long runs die or overspend, and you notice afterwards | 🔔 **Dialogue Alert** | Forced interruptions ring immediately, by severity; the sidebar also shows DeepSeek conversation count and balance |
+| Repeated context, fast token burn, low cache hit rate | 🧭 **Auto Dispatch** | Fixed slots plus receipt/reply discipline reuse context; author's environment measured **99.6% cache hit** and **≈¥5.47 per 100M tokens** |
 
 All four plugins load on the DSH side only: no DSH source edits, no touching your session data. The auto-dispatch workflow spec is included separately.
 
@@ -76,7 +77,7 @@ Then run `pnpm install` once inside that profile directory and restart dsh web.
 | ⚡ Quick Append | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.3 | Composer "quick append" button plus a stored-command menu and editor dialog (the dialog is portaled to body, no longer covered by the sidebar) |
 | 🧩 PTC Task | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | Registers the `ptc_task` tool: hand a whole job to a PTC-scoped subagent |
 | 🔔 Dialogue Alert | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.4 | Severity-based interruption alarms plus conversation count / balance (collapses to an icon when space runs out; long-connection push with a 45s fallback) |
-| 🧭 Auto Dispatch | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | — (workflow spec) | v1 | User decision → todo maintenance → execution slots: two skills, safe dispatch script, slot bootstrap/backup/version checks; monitoring dashboard is BYO |
+| 🧭 Auto Dispatch | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | — (workflow spec) | v1 | User decision → todo maintenance → execution slots; author's environment measured 99.6% cache hit and ≈¥5.47 per 100M tokens; monitoring dashboard is BYO |
 | 🐟 Anime Desktop Pet (author use) | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.7 | A simple desktop pet + decoration the author uses; no recommendation implied. |
 
 ### ⚡ Quick Append · [details](dsh-quick-append/README.md)
@@ -119,6 +120,16 @@ The optimise context has three parts (each with a code anchor — no black box):
 ### 🧭 Auto-dispatch workflow · [spec package](dsh-auto-dispatch-specification/README.md)
 
 A production-tested automation workflow for DSH: **User decision → Todo maintenance → Execution slots**. This is a **workflow spec package** (skills + rules + dispatch script + slot bootstrap/backup/version-check), not a regular plugin.
+
+**🔥 Measured results (author's environment; not a general guarantee)**
+
+| Token cache hit rate 99.6% | Last 30 days: 49,320,381,740 tokens / ¥2,698.76 |
+| --- | --- |
+| ![cache hit 99.6%](dsh-auto-dispatch-specification/docs/images/cache-hit-99.6.png) | ![last 30 days usage](dsh-auto-dispatch-specification/docs/images/usage-cost-100m-tokens.png) |
+
+- **99.6% cache hit rate** measured in the author's DSH status bar after consistently using automated dispatch.
+- **≈ ¥5.47 per 100M tokens**: `¥2,698.76 ÷ 493.2038174 ≈ ¥5.47`, i.e. the 5–6 CNY per 100M-token range.
+- **Preconditions**: strictly use automated dispatch tasks; the author uses the open-source [Ponytail](https://github.com/DietrichGebert/ponytail) project to save tokens; the author uses **DeepSeek V4.1-Flash** throughout. Single-environment measurement, not a guarantee.
 
 - **7-slot topology**: U (single user entry) → A (single dispatcher) → B/F builders, C release, E crash, G GitHub. One task goes to exactly one execution slot; replies go back through A → U.
 - **Receipt means delivered**: writing to `outbox/` is not enough; `state/<name>.done = SENT -> <slot>` is the proof. Same-name files can only be sent once; retries need a new id.
