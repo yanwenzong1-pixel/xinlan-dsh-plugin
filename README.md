@@ -10,6 +10,8 @@
 
 `DSH 插件` · `DeepSeek Harness` · `DeepSeek 外部插件` · `cordis patch bundle` · `AI Agent 提效` · `子代理任务派发` · `全自动派发` · `多智能体工作流`
 
+> **平台说明**：作者当前使用的是 **DeepSeek Harness（DSH）Web 端**进行开发与验证；如果你使用的是 **Desktop 桌面端**，需要自行做兼容化改造（插件加载、WebServer/路由、资源路径、计划任务或权限等），本仓库不保证 Desktop 开箱即用。
+
 ---
 
 ## 30 秒看懂它能干什么
@@ -178,6 +180,12 @@ docs/                        设计与迭代记录（含界面截图与踩坑过
 - `cordis.patch.yml` —— 把该插件插入 profile 层栈的 bundle patch（宿主接入凭据）
 - `scripts/build.ps1` —— 构建入口（Windows PowerShell）
 - `lib/` —— 已提交的构建产物（含 `lib/types/*.d.ts` 与 sourcemap）
+
+## 平台兼容性
+
+- 作者开发与验证环境：**DeepSeek Harness Web 端**（`dsh web` + 浏览器），Windows 本机 profile。
+- 本仓库的插件、全自动派发规格包、动画桌宠均按 **Web 端**编写和验证。
+- **Desktop 桌面端需要自行做兼容化改造**：插件加载方式、WebServer/静态资源路由、路径与权限、计划任务/重启方式都可能不同；作者未在 Desktop 上验证，不提供开箱即用保证。
 
 ## 环境要求
 

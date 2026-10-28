@@ -9,6 +9,8 @@
 
 `DSH plugin` · `DeepSeek Harness` · `DSH external plugin` · `cordis patch bundle` · `AI agent tooling` · `subagent task dispatch` · `auto dispatch` · `multi-agent workflow`
 
+> **Platform note**: the author develops and verifies on the **DeepSeek Harness (DSH) Web client**. If you use the **Desktop app**, you must do the compatibility work yourself (plugin loading, WebServer/routes, asset paths, scheduled tasks/permissions, etc.); this repository does not guarantee out-of-the-box Desktop support.
+
 ---
 
 ## What you get in 30 seconds
@@ -178,6 +180,12 @@ Fixed files inside each plugin directory:
 - `cordis.patch.yml` — the bundle patch that inserts the plugin into the profile layer stack
 - `scripts/build.ps1` — build entry point (Windows PowerShell)
 - `lib/` — committed build output (including `lib/types/*.d.ts` and sourcemaps)
+
+## Platform compatibility
+
+- The author develops and verifies on the **DeepSeek Harness Web client** (`dsh web` + browser) with a Windows-local profile.
+- The plugins, auto-dispatch spec and anime desktop pet in this repo are written and verified for the **Web client**.
+- **The Desktop app requires your own compatibility work**: plugin loading, WebServer/static asset routes, paths/permissions and scheduled tasks/restarts may differ; the author has not verified Desktop, and out-of-the-box support is not promised.
 
 ## Requirements
 
