@@ -32,7 +32,9 @@ cd xinlan-dsh-plugin
 dsh plugin --profile web add ./dsh-quick-append
 dsh plugin --profile web add ./dsh-ptc-task
 dsh plugin --profile web add ./dsh-dialogue-alert-message
-dsh plugin --profile web add ./dsh-anime-desktop-pet
+
+# dsh-auto-dispatch-specification（全自动派发规格包，不是 dsh plugin）
+# 按该目录 README 复制 skills/、support/ 并初始化槽位
 ```
 
 重启 dsh web（或刷新页面）即可。装上「闪电追加」后，输入框右侧会多出 ⚡ 和 🔧 两个按钮。
@@ -42,6 +44,7 @@ dsh plugin --profile web add ./dsh-anime-desktop-pet
 - 卸载：`dsh plugin --profile web remove @dsh-external/dsh-quick-append`。
 - **不需要构建**：四个插件的 `lib/` 都已随仓库提交（`main` 直接指向 `lib/index.js`），clone 下来即可加载。
 - 🧭 **全自动派发是规格包，不是 `dsh plugin` 插件**：按 [`dsh-auto-dispatch-specification/README.md`](dsh-auto-dispatch-specification/README.md) 复制技能/脚本/配置并初始化槽位即可。
+- 🐟 动画桌宠为作者自用，默认不写入上面的快速上手命令；需要时再执行 `dsh plugin --profile web add ./dsh-anime-desktop-pet`。
 
 <details>
 <summary>不想用 CLI？手改 profile（等价做法）</summary>

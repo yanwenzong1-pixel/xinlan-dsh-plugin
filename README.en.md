@@ -31,7 +31,9 @@ cd xinlan-dsh-plugin
 dsh plugin --profile web add ./dsh-quick-append
 dsh plugin --profile web add ./dsh-ptc-task
 dsh plugin --profile web add ./dsh-dialogue-alert-message
-dsh plugin --profile web add ./dsh-anime-desktop-pet
+
+# dsh-auto-dispatch-specification (workflow spec package, not a dsh plugin)
+# Follow that README to copy skills/ and support/, then initialise slots.
 ```
 
 Restart dsh web (or refresh the page). After Quick Append is installed, the composer gets two extra buttons: ⚡ and 🔧.
@@ -39,6 +41,9 @@ Restart dsh web (or refresh the page). After Quick Append is installed, the comp
 - Replace `--profile web` with your own profile name (`web` / `headless` / custom).
 - `dsh plugin … add` installs the package into the profile and **automatically registers any package that declares `dsh.bundle.patch` into `dsh.profile.bundles`** — no JSON editing.
 - Uninstall: `dsh plugin --profile web remove @dsh-external/dsh-quick-append`.
+- **No build step**: all four plugins ship their `lib/` output (`main` points at `lib/index.js`), so a clone loads directly.
+- 🧭 **Auto-dispatch is a spec package, not a `dsh plugin` plugin**: follow [`dsh-auto-dispatch-specification/README.md`](dsh-auto-dispatch-specification/README.md) to copy skills/scripts/config and initialise slots.
+- 🐟 The anime desktop pet is for the author's own use and is intentionally not in the quick-start commands; install it with `dsh plugin --profile web add ./dsh-anime-desktop-pet` if you want it.
 - **No build required**: each plugin ships its `lib/` output in the repo (`main` points at `lib/index.js`), so a clone is immediately loadable.
 
 <details>
