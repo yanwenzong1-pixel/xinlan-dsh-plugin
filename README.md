@@ -1,6 +1,6 @@
 # DSH 扩展坞
 
-**给 DeepSeek Harness（DSH）插上更多接口 —— 3 个开箱即用的插件，clone 完不用构建就能装。**
+**给 DeepSeek Harness（DSH）插上更多接口 —— 4 个开箱即用的插件 + 1 套全自动派发工作流规格包，clone 完不用构建就能装。**
 
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-0.1.5--rc.1-4f46e5.svg)](#环境要求)
@@ -8,7 +8,7 @@
 
 [English](README.en.md) · 中文
 
-`DSH 插件` · `DeepSeek Harness` · `DeepSeek 外部插件` · `cordis patch bundle` · `AI Agent 提效` · `子代理任务派发`
+`DSH 插件` · `DeepSeek Harness` · `DeepSeek 外部插件` · `cordis patch bundle` · `AI Agent 提效` · `子代理任务派发` · `全自动派发` · `多智能体工作流`
 
 ---
 
@@ -20,7 +20,7 @@
 | 想把一整件事丢给子代理，又受不了中间输出刷屏 | 🧩 **一键派活** | 子代理用 PTC（code）模式写一段程序跑完，中间输出留在程序里，**只把结论路径回给你** |
 | 长任务跑着跑着断了、花超了，事后才发现 | 🔔 **报警铃铛** | 被非主动原因中断立刻**分级响铃**；侧栏顺带显示 DeepSeek 对话数与余额 |
 
-三个插件都只在 DSH 侧加载，不改 DSH 源码、不碰你的会话数据。
+四个插件都只在 DSH 侧加载，不改 DSH 源码、不碰你的会话数据；另附一套自动派发工作流规格包。
 
 ## 快速上手（约 1 分钟）
 
@@ -31,6 +31,7 @@ cd xinlan-dsh-plugin
 dsh plugin --profile web add ./dsh-quick-append
 dsh plugin --profile web add ./dsh-ptc-task
 dsh plugin --profile web add ./dsh-dialogue-alert-message
+dsh plugin --profile web add ./dsh-anime-desktop-pet
 ```
 
 重启 dsh web（或刷新页面）即可。装上「闪电追加」后，输入框右侧会多出 ⚡ 和 🔧 两个按钮。
@@ -38,7 +39,8 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 - `--profile web` 换成你自己的 profile 名（`web` / `headless` / 自定义）即可。
 - `dsh plugin … add` 会把插件装进 profile，并**自动把声明了 `dsh.bundle.patch` 的包登记进 `dsh.profile.bundles`**，不需要手改 JSON。
 - 卸载：`dsh plugin --profile web remove @dsh-external/dsh-quick-append`。
-- **不需要构建**：三个插件的 `lib/` 都已随仓库提交（`main` 直接指向 `lib/index.js`），clone 下来即可加载。
+- **不需要构建**：四个插件的 `lib/` 都已随仓库提交（`main` 直接指向 `lib/index.js`），clone 下来即可加载。
+- 🧭 **全自动派发是规格包，不是 `dsh plugin` 插件**：按 [`dsh-auto-dispatch-specification/README.md`](dsh-auto-dispatch-specification/README.md) 复制技能/脚本/配置并初始化槽位即可。
 
 <details>
 <summary>不想用 CLI？手改 profile（等价做法）</summary>
@@ -75,7 +77,9 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 | --- | --- | --- | --- | --- |
 | ⚡ 闪电追加 | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.3 | 输入框「快速追加」按钮 + 预存命令菜单与编辑弹窗（弹窗挂在 body，不被侧栏压住） |
 | 🧩 一键派活 | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | 向宿主注册 `ptc_task` 工具，把整件事交给 PTC 作用域子代理 |
-| 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.3 | 对话中断分级报警 + 侧栏对话数与余额显示（空间不够自动收成图标） |
+| 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.4 | 对话中断分级报警 + 侧栏对话数与余额显示（空间不够自动收成图标；长连接推送 + 45s 兜底） |
+| 🧭 全自动派发 | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | —（工作流规格包） | v1 | 用户决策 → 待办维护 → 执行槽位的自动派发链路：两个技能、派单脚本、槽位初始化/备份/版本检查；监控 dashboard 需自建 |
+| 🐟 动画桌宠（作者自用） | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.7 | 作者自己使用的简单桌宠+装饰，无推荐功能。 |
 
 ### ⚡ 闪电追加 · [详细说明](dsh-quick-append/README.md)
 
@@ -111,7 +115,31 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 - 对话正常完成播「叮咚」；被**非用户主动**原因中断时按等级播报警音（工具报错 / 强制取消 / 会话驱逐 / 宿主重启）。
 - 只对非主动中断报警：你按的取消不会响。
 - 侧栏状态栏显示 DeepSeek 账号用量：对话数 / 余额（v0.2.2 起不再显示「当日花费」，数据仍在 `/api/usage` 中保留）。**v0.2.3 起按可用宽度自适应**：底部动作行被同行插件（如 DSH 内置 Cordis 行）占满时自动收成 12px 图标，完整数据进悬停提示，空间恢复自动还原——不会反过来挤压同行插件。
+- **v0.2.4 修「http 换长链后余额数字消失」**：v0.2.3-push 把 1s 轮询改成长连接推送时，宿主侧在 isolate fiber 里直读未 `inject` 的 `typertGateway`，抛错被 `apply` 兜底吞掉 ⇒ 之后的 Web API 路由/余额定时器都没注册，客户端只能拿到 404。现在 gateway 改为 `ctx.get()` 惰性可选读取（网关晚到自动接上、push 失败不提交签名下个 tick 重试），推送块独立 try/catch——推送不可用绝不影响 Web API/余额/报警；客户端首拉失败会按 0/1/3/10s 退避重试。
 - 报警走本插件自包含通道（宿主队列 `/api/alarm` → 客户端 WebAudio + ack），不依赖任何第三方插件。
+
+### 🧭 全自动派发工作流 · [规格包](dsh-auto-dispatch-specification/README.md)
+
+把作者已经在生产里跑通的「**用户决策 → 待办维护 → 执行槽位**」自动化开发链路，打包给另一个 DSH 环境复刻。它不是普通插件，而是一套可直接落地的**工作流规格包**：技能 + 规则 + 派单脚本 + 槽位初始化/备份/版本检查。
+
+- **默认 7 槽拓扑**：U 用户决策（唯一入口）→ A 待办维护（唯一调度点）→ B/F 生产、C 发布、E 崩溃、G GitHub。一件活只派一个执行槽位；执行方不直接找用户，结果通过回函交回 A→U。
+- **收据才算送达**：写进 `outbox/` 只是投邮筒；必须看到 `state/<原名>.done = SENT -> <槽位>` 才算派单成功。同名文件只投一次，重发要换号。
+- **派单安全链路**：体检 → 干跑 → 确认 → 收据 → 台账/回函；角色/类型硬拦；规格必须写「判据」和「边界」，问题前置一次问完。
+- **两个技能分工**：`y-automation-portable` 负责装/搬/备份/槽位/版本跟随；`y-task-distribution-auto` 是日常派单唯一入口。
+- **五条回合纪律**：禁止回合内 sleep 等待；新任务默认入待办；收据才算送达；重启前后先体检与通知；待办清单每次变更都归拢、跑门禁。
+- **Windows 本机部署**：计划任务、PowerShell 隐藏壳、DSH profile/槽位均按 Windows 平面设计；不承诺 Linux/macOS。
+- **安装不是 `dsh plugin add`**：按规格包 README 的三步复制 `skills/`、`support/` 与配置，再执行 `node scripts/init-slots.mjs --dry-run` 建 7 个默认槽位；通过 `relay-dispatch.mjs check` 做在线体检。
+
+| DSH 槽位会话示意 | 自建监控 dashboard（**不包含在本仓库**） |
+| --- | --- |
+| ![槽位会话示例](dsh-auto-dispatch-specification/docs/images/slots-session-list.png) | ![监控 dashboard 示例](dsh-auto-dispatch-specification/docs/images/monitor-dashboard-example.png) |
+
+> ⚠️ **第二张监控 dashboard 不在开源代码里**：它是作者环境自建的可视化面板，仅用于展示槽位关系/在线状态/当前任务/回函观感。本仓库只开源自动化开发流程本身（技能、规则、派单脚本、槽位初始化、备份与版本检查），**不含 dashboard 的前端、后端、数据源或部署代码**；使用者需要自己为自动化流程配一个监控面板，或直接使用 DSH 会话列表与 `relay-dispatch.mjs check/status` 的文本输出。截图中的会话命名、任务标题、槽位 ID 均为演示口径。
+
+### 🐟 动画桌宠（作者自用）
+
+作者自己使用的简单桌宠+装饰，无推荐功能。技术维护/复现文档见 [插件 README](dsh-anime-desktop-pet/README.md)，本页不再展开。
+
 
 ## 先看这条坑（否则可能整个 dsh-web 起不来）
 
@@ -126,6 +154,8 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 dsh-quick-append/            宿主半 src/index.ts + 客户端半 src/client/ + 构建产物 lib/ + 测试 test/
 dsh-dialogue-alert-message/  同上（另含 SPEC.md、integration-check.mjs）
 dsh-ptc-task/                纯宿主插件：src/index.ts + lib/index.js，无客户端半
+dsh-anime-desktop-pet/  独立覆盖层：Client(Shadow DOM 浮层) + Host(GIF 路由) + assets/ + scripts/ + test/
+dsh-auto-dispatch-specification/  全自动派发工作流规格包：技能 + 规则 + 派单/槽位/备份脚本（不含监控 dashboard）
 docs/                        设计与迭代记录（含界面截图与踩坑过程）
 ```
 
@@ -141,6 +171,7 @@ docs/                        设计与迭代记录（含界面截图与踩坑过
 - Node.js ≥ 20；加载插件**不需要**构建，改源码才需要
 - 构建脚本是 Windows PowerShell（`scripts/build.ps1`，依赖 `$env:DSH_CHECKOUT` 或 `-Checkout` 参数）
 - 仓库不提交 `node_modules/`；`lib/` 构建产物**有意**随仓库提交
+- 全自动派发规格包面向 **Windows 本机 DSH**（计划任务/PowerShell）；监控 dashboard 不在仓库内
 
 ## 开发与测试
 
@@ -158,8 +189,18 @@ npm test          # node --test
 
 ## 搜索关键词 / Keywords
 
-`DSH` · `DSH 插件` · `DeepSeek Harness` · `DeepSeek Harness 插件` · `DeepSeek 外部插件` · `cordis` · `cordis bundle` · `profile bundle` · `预存命令` · `提示词快捷追加` · `prompt preset` · `子代理任务派发` · `subagent dispatch` · `PTC` · `中断报警` · `用量监控` · `AI Agent 提效`
+`DSH` · `DSH 插件` · `DeepSeek Harness` · `DeepSeek Harness 插件` · `DeepSeek 外部插件` · `cordis` · `cordis bundle` · `profile bundle` · `预存命令` · `提示词快捷追加` · `prompt preset` · `子代理任务派发` · `subagent dispatch` · `PTC` · `中断报警` · `用量监控` · `AI Agent 提效` · `全自动派发` · `多智能体工作流` · `auto dispatch` · `workflow automation`
 
 ## 许可
 
-BSD-3-Clause，见 [LICENSE](LICENSE)。三个插件的 `package.json` 同样声明 `license: BSD-3-Clause`。
+BSD-3-Clause，见 [LICENSE](LICENSE)。四个插件的 `package.json` 同样声明 `license: BSD-3-Clause`。
+
+
+
+
+
+
+
+
+
+

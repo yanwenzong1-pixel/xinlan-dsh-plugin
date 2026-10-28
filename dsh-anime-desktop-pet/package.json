@@ -1,0 +1,59 @@
+{
+  "name": "@dsh-external/dsh-anime-desktop-pet",
+  "version": "0.9.7",
+  "description": "DSH material-driven live-room scene overlay: named balloon/fish/girl/banner slices with @1x/@2x transparency, normalized layout.json choreography, CSS motion primitives, seeded single-state interaction, bubble/linkage/pause/reduced-motion support, plus the legacy sidebar pet overlay fallback.",
+  "private": true,
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "files": [
+    "lib",
+    "assets/*.gif",
+    "assets/animated/*",
+    "assets/banner/**/*",
+    "assets/three-view/*",
+    "assets/source/*",
+    "assets/slices/**/*",
+    "cordis.patch.yml"
+  ],
+  "license": "BSD-3-Clause",
+  "scripts": {
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "build:gif": "python scripts/build-gif.py",
+    "test": "node --test",
+    "build:banner": "python scripts/build-banner.py",
+    "build:tired": "python scripts/build-tired-gif.py",
+    "build:banner-animation": "python scripts/build-banner-animation.py",
+    "slice:scene": "python scripts/slice-live-scene.py",
+    "verify:scene": "node scripts/verify-scene-live.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-api-session-controller"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "cordis": ">=4.0.0-rc <5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.0",
+    "tsdown": "^0.22.14"
+  }
+}

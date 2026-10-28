@@ -1,0 +1,36 @@
+{
+  "_docs": {
+    "purpose": "automation.config.json 的示例骨架。复制到 <repo>/automation.config.json 后，把所有 {{…}} 换成本机真实值。",
+    "placeholderReference": "见 docs/placeholder-map.md",
+    "slots": "默认 7 个对话（U/A/B/F/C/E/G）。扩展槽位（I/D/H/J/T）按需追加，并在 slotsNote 写明原因。",
+    "note": "本文件是示例：端口 3080/8091 只是示例值，按 automation.config.json 的实际情况改；其余 {{…}} 必须替换。"
+  },
+  "paths": {
+    "repoRoot": "{{REPO_ROOT}}",
+    "dshHome": "{{DSH_HOME}}",
+    "protocolDir": "local/protocol",
+    "backupDir": "local/backups",
+    "relayWatchSource": "{{DSH_HELPER_DIR}}\\plugins\\dsh-relay-watch"
+  },
+  "ports": {
+    "dev": 3080,
+    "release": 8091
+  },
+  "domains": {
+    "public": "{{PUBLIC_DOMAIN}}"
+  },
+  "dsh": {
+    "checkout": "{{DSH_CHECKOUT}}",
+    "version": "{{DSH_VERSION}}"
+  },
+  "slots": [
+    { "id": "U", "title": "用户决策",     "cwd": "{{REPO_ROOT}}", "role": "用户入口（唯一入口，只与用户对接；不向执行槽位派单）" },
+    { "id": "A", "title": "待办维护",     "cwd": "{{REPO_ROOT}}", "role": "调度点（默认发起方）" },
+    { "id": "B", "title": "插件生产",     "cwd": "{{REPO_ROOT}}", "role": "开发（第一生产槽位）" },
+    { "id": "F", "title": "插件生产",     "cwd": "{{REPO_ROOT}}", "role": "开发（第二生产槽位，与 B 并行）" },
+    { "id": "C", "title": "发布 Release", "cwd": "{{REPO_ROOT}}", "role": "发布（只做发布与发布面救火）" },
+    { "id": "E", "title": "崩溃报告",     "cwd": "{{REPO_ROOT}}", "role": "崩溃简报处理与宿主故障取证" },
+    { "id": "G", "title": "Github-投研仓", "cwd": "{{REPO_ROOT}}", "role": "GitHub 上传（投研仓）" }
+  ],
+  "slotsNote": "默认 7 个对话 = U + A + 2 生产 + 1 发布 + 1 崩溃 + 1 GitHub。扩展槽位追加时，在此写明原因与 kind。"
+}

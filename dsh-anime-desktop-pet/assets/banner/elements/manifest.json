@@ -1,0 +1,1388 @@
+[
+  {
+    "file": "assets/banner/elements/balloon/balloon-001.png",
+    "kind": "balloon",
+    "area": 22324,
+    "bbox": [
+      259,
+      25,
+      465,
+      197
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-002.png",
+    "kind": "balloon",
+    "area": 22264,
+    "bbox": [
+      1045,
+      26,
+      1252,
+      202
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-003.png",
+    "kind": "balloon",
+    "area": 21483,
+    "bbox": [
+      34,
+      26,
+      223,
+      201
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-004.png",
+    "kind": "balloon",
+    "area": 20693,
+    "bbox": [
+      541,
+      27,
+      728,
+      201
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-005.png",
+    "kind": "balloon",
+    "area": 20268,
+    "bbox": [
+      791,
+      25,
+      979,
+      203
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-006.png",
+    "kind": "balloon",
+    "area": 19821,
+    "bbox": [
+      1577,
+      26,
+      1750,
+      204
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-007.png",
+    "kind": "balloon",
+    "area": 15639,
+    "bbox": [
+      1358,
+      25,
+      1496,
+      201
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-008.png",
+    "kind": "balloon",
+    "area": 12285,
+    "bbox": [
+      91,
+      226,
+      256,
+      355
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-009.png",
+    "kind": "balloon",
+    "area": 12125,
+    "bbox": [
+      306,
+      227,
+      492,
+      349
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-010.png",
+    "kind": "balloon",
+    "area": 11675,
+    "bbox": [
+      807,
+      226,
+      978,
+      354
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-011.png",
+    "kind": "balloon",
+    "area": 11399,
+    "bbox": [
+      586,
+      227,
+      751,
+      351
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-012.png",
+    "kind": "balloon",
+    "area": 11371,
+    "bbox": [
+      1826,
+      61,
+      1969,
+      203
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-013.png",
+    "kind": "balloon",
+    "area": 11213,
+    "bbox": [
+      1088,
+      229,
+      1244,
+      352
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-014.png",
+    "kind": "balloon",
+    "area": 10641,
+    "bbox": [
+      1338,
+      236,
+      1490,
+      350
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-015.png",
+    "kind": "balloon",
+    "area": 9636,
+    "bbox": [
+      1598,
+      244,
+      1736,
+      352
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-016.png",
+    "kind": "balloon",
+    "area": 8093,
+    "bbox": [
+      1829,
+      247,
+      1946,
+      353
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-017.png",
+    "kind": "balloon",
+    "area": 982,
+    "bbox": [
+      2073,
+      271,
+      2108,
+      320
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-018.png",
+    "kind": "balloon",
+    "area": 872,
+    "bbox": [
+      1227,
+      146,
+      1268,
+      179
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-019.png",
+    "kind": "balloon",
+    "area": 462,
+    "bbox": [
+      2094,
+      121,
+      2121,
+      143
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-020.png",
+    "kind": "balloon",
+    "area": 460,
+    "bbox": [
+      812,
+      267,
+      836,
+      294
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-021.png",
+    "kind": "balloon",
+    "area": 457,
+    "bbox": [
+      1321,
+      123,
+      1352,
+      144
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-022.png",
+    "kind": "balloon",
+    "area": 455,
+    "bbox": [
+      566,
+      267,
+      593,
+      289
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-023.png",
+    "kind": "balloon",
+    "area": 362,
+    "bbox": [
+      34,
+      146,
+      56,
+      171
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-024.png",
+    "kind": "balloon",
+    "area": 303,
+    "bbox": [
+      1326,
+      80,
+      1349,
+      97
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-025.png",
+    "kind": "balloon",
+    "area": 286,
+    "bbox": [
+      2068,
+      98,
+      2089,
+      115
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-026.png",
+    "kind": "balloon",
+    "area": 278,
+    "bbox": [
+      2109,
+      229,
+      2127,
+      251
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-027.png",
+    "kind": "balloon",
+    "area": 259,
+    "bbox": [
+      1723,
+      178,
+      1742,
+      196
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-028.png",
+    "kind": "balloon",
+    "area": 258,
+    "bbox": [
+      1063,
+      288,
+      1081,
+      307
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-029.png",
+    "kind": "balloon",
+    "area": 241,
+    "bbox": [
+      1064,
+      257,
+      1082,
+      273
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-030.png",
+    "kind": "balloon",
+    "area": 234,
+    "bbox": [
+      563,
+      305,
+      580,
+      323
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-031.png",
+    "kind": "balloon",
+    "area": 230,
+    "bbox": [
+      1323,
+      283,
+      1341,
+      303
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-032.png",
+    "kind": "balloon",
+    "area": 228,
+    "bbox": [
+      1579,
+      146,
+      1598,
+      162
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-033.png",
+    "kind": "balloon",
+    "area": 228,
+    "bbox": [
+      81,
+      241,
+      98,
+      257
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-034.png",
+    "kind": "balloon",
+    "area": 221,
+    "bbox": [
+      1571,
+      303,
+      1590,
+      320
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-035.png",
+    "kind": "balloon",
+    "area": 213,
+    "bbox": [
+      1809,
+      331,
+      1826,
+      348
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-036.png",
+    "kind": "balloon",
+    "area": 203,
+    "bbox": [
+      533,
+      145,
+      549,
+      161
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-037.png",
+    "kind": "balloon",
+    "area": 178,
+    "bbox": [
+      80,
+      309,
+      95,
+      326
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-038.png",
+    "kind": "balloon",
+    "area": 172,
+    "bbox": [
+      458,
+      73,
+      476,
+      88
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-039.png",
+    "kind": "balloon",
+    "area": 165,
+    "bbox": [
+      42,
+      263,
+      58,
+      277
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-040.png",
+    "kind": "balloon",
+    "area": 134,
+    "bbox": [
+      2047,
+      276,
+      2061,
+      288
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-041.png",
+    "kind": "balloon",
+    "area": 107,
+    "bbox": [
+      812,
+      251,
+      824,
+      267
+    ]
+  },
+  {
+    "file": "assets/banner/elements/balloon/balloon-042.png",
+    "kind": "balloon",
+    "area": 96,
+    "bbox": [
+      1586,
+      282,
+      1598,
+      292
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-001.png",
+    "kind": "ribbon",
+    "area": 5531,
+    "bbox": [
+      493,
+      398,
+      755,
+      469
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-002.png",
+    "kind": "ribbon",
+    "area": 4388,
+    "bbox": [
+      261,
+      389,
+      433,
+      472
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-003.png",
+    "kind": "ribbon",
+    "area": 4387,
+    "bbox": [
+      1423,
+      392,
+      1628,
+      467
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-004.png",
+    "kind": "ribbon",
+    "area": 4217,
+    "bbox": [
+      851,
+      516,
+      1058,
+      582
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-005.png",
+    "kind": "ribbon",
+    "area": 4019,
+    "bbox": [
+      1097,
+      395,
+      1321,
+      462
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-006.png",
+    "kind": "ribbon",
+    "area": 3948,
+    "bbox": [
+      833,
+      390,
+      1051,
+      468
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-007.png",
+    "kind": "ribbon",
+    "area": 3386,
+    "bbox": [
+      41,
+      389,
+      179,
+      465
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-008.png",
+    "kind": "ribbon",
+    "area": 3135,
+    "bbox": [
+      1698,
+      404,
+      1895,
+      460
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-009.png",
+    "kind": "ribbon",
+    "area": 2998,
+    "bbox": [
+      346,
+      521,
+      493,
+      572
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-010.png",
+    "kind": "ribbon",
+    "area": 2939,
+    "bbox": [
+      1422,
+      523,
+      1615,
+      565
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-011.png",
+    "kind": "ribbon",
+    "area": 2682,
+    "bbox": [
+      1974,
+      397,
+      2132,
+      439
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-012.png",
+    "kind": "ribbon",
+    "area": 2526,
+    "bbox": [
+      1159,
+      511,
+      1316,
+      577
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-013.png",
+    "kind": "ribbon",
+    "area": 2352,
+    "bbox": [
+      569,
+      533,
+      712,
+      585
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-014.png",
+    "kind": "ribbon",
+    "area": 1954,
+    "bbox": [
+      1765,
+      528,
+      1897,
+      562
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-015.png",
+    "kind": "ribbon",
+    "area": 1866,
+    "bbox": [
+      75,
+      514,
+      179,
+      560
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-016.png",
+    "kind": "ribbon",
+    "area": 828,
+    "bbox": [
+      2027,
+      515,
+      2085,
+      540
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-017.png",
+    "kind": "ribbon",
+    "area": 710,
+    "bbox": [
+      34,
+      526,
+      64,
+      577
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-018.png",
+    "kind": "ribbon",
+    "area": 602,
+    "bbox": [
+      2079,
+      541,
+      2122,
+      564
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-019.png",
+    "kind": "ribbon",
+    "area": 592,
+    "bbox": [
+      285,
+      543,
+      327,
+      563
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-020.png",
+    "kind": "ribbon",
+    "area": 553,
+    "bbox": [
+      1684,
+      546,
+      1733,
+      573
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-021.png",
+    "kind": "ribbon",
+    "area": 429,
+    "bbox": [
+      1440,
+      410,
+      1469,
+      434
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-022.png",
+    "kind": "ribbon",
+    "area": 360,
+    "bbox": [
+      1966,
+      541,
+      1990,
+      563
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-023.png",
+    "kind": "ribbon",
+    "area": 348,
+    "bbox": [
+      796,
+      415,
+      818,
+      436
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-024.png",
+    "kind": "ribbon",
+    "area": 342,
+    "bbox": [
+      1558,
+      516,
+      1579,
+      538
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-025.png",
+    "kind": "ribbon",
+    "area": 336,
+    "bbox": [
+      1647,
+      388,
+      1670,
+      410
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-026.png",
+    "kind": "ribbon",
+    "area": 327,
+    "bbox": [
+      1128,
+      543,
+      1150,
+      565
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-027.png",
+    "kind": "ribbon",
+    "area": 316,
+    "bbox": [
+      244,
+      401,
+      267,
+      419
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-028.png",
+    "kind": "ribbon",
+    "area": 290,
+    "bbox": [
+      1738,
+      452,
+      1757,
+      474
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-029.png",
+    "kind": "ribbon",
+    "area": 288,
+    "bbox": [
+      469,
+      429,
+      489,
+      449
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-030.png",
+    "kind": "ribbon",
+    "area": 288,
+    "bbox": [
+      800,
+      444,
+      819,
+      464
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-031.png",
+    "kind": "ribbon",
+    "area": 281,
+    "bbox": [
+      1243,
+      418,
+      1265,
+      437
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-032.png",
+    "kind": "ribbon",
+    "area": 262,
+    "bbox": [
+      210,
+      433,
+      229,
+      453
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-033.png",
+    "kind": "ribbon",
+    "area": 258,
+    "bbox": [
+      643,
+      522,
+      659,
+      542
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-034.png",
+    "kind": "ribbon",
+    "area": 249,
+    "bbox": [
+      664,
+      394,
+      682,
+      415
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-035.png",
+    "kind": "ribbon",
+    "area": 237,
+    "bbox": [
+      1930,
+      404,
+      1946,
+      422
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-036.png",
+    "kind": "ribbon",
+    "area": 237,
+    "bbox": [
+      1394,
+      434,
+      1413,
+      449
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-037.png",
+    "kind": "ribbon",
+    "area": 234,
+    "bbox": [
+      1379,
+      404,
+      1397,
+      422
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-038.png",
+    "kind": "ribbon",
+    "area": 204,
+    "bbox": [
+      815,
+      528,
+      833,
+      545
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-039.png",
+    "kind": "ribbon",
+    "area": 197,
+    "bbox": [
+      1958,
+      441,
+      1975,
+      457
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-040.png",
+    "kind": "ribbon",
+    "area": 188,
+    "bbox": [
+      1272,
+      520,
+      1288,
+      538
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-041.png",
+    "kind": "ribbon",
+    "area": 186,
+    "bbox": [
+      880,
+      404,
+      897,
+      420
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-042.png",
+    "kind": "ribbon",
+    "area": 174,
+    "bbox": [
+      722,
+      534,
+      738,
+      549
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-043.png",
+    "kind": "ribbon",
+    "area": 167,
+    "bbox": [
+      1096,
+      564,
+      1109,
+      578
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-044.png",
+    "kind": "ribbon",
+    "area": 165,
+    "bbox": [
+      1990,
+      518,
+      2006,
+      532
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-045.png",
+    "kind": "ribbon",
+    "area": 153,
+    "bbox": [
+      1365,
+      550,
+      1380,
+      564
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-046.png",
+    "kind": "ribbon",
+    "area": 151,
+    "bbox": [
+      2117,
+      438,
+      2132,
+      453
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-047.png",
+    "kind": "ribbon",
+    "area": 128,
+    "bbox": [
+      1114,
+      520,
+      1128,
+      533
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-048.png",
+    "kind": "ribbon",
+    "area": 88,
+    "bbox": [
+      199,
+      541,
+      209,
+      552
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-049.png",
+    "kind": "ribbon",
+    "area": 74,
+    "bbox": [
+      1389,
+      534,
+      1397,
+      545
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-050.png",
+    "kind": "ribbon",
+    "area": 53,
+    "bbox": [
+      818,
+      563,
+      825,
+      571
+    ]
+  },
+  {
+    "file": "assets/banner/elements/ribbon/ribbon-051.png",
+    "kind": "ribbon",
+    "area": 32,
+    "bbox": [
+      1728,
+      539,
+      1734,
+      545
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-001.png",
+    "kind": "star",
+    "area": 1969,
+    "bbox": [
+      99,
+      608,
+      158,
+      662
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-002.png",
+    "kind": "star",
+    "area": 1682,
+    "bbox": [
+      289,
+      612,
+      338,
+      658
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-003.png",
+    "kind": "star",
+    "area": 1543,
+    "bbox": [
+      532,
+      622,
+      591,
+      671
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-004.png",
+    "kind": "star",
+    "area": 1444,
+    "bbox": [
+      1594,
+      619,
+      1645,
+      674
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-005.png",
+    "kind": "star",
+    "area": 1211,
+    "bbox": [
+      1384,
+      629,
+      1427,
+      675
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-006.png",
+    "kind": "star",
+    "area": 1102,
+    "bbox": [
+      370,
+      655,
+      441,
+      695
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-007.png",
+    "kind": "star",
+    "area": 994,
+    "bbox": [
+      1094,
+      611,
+      1136,
+      653
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-008.png",
+    "kind": "star",
+    "area": 943,
+    "bbox": [
+      1443,
+      631,
+      1478,
+      683
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-009.png",
+    "kind": "star",
+    "area": 887,
+    "bbox": [
+      818,
+      625,
+      853,
+      659
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-010.png",
+    "kind": "star",
+    "area": 853,
+    "bbox": [
+      1189,
+      635,
+      1222,
+      673
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-011.png",
+    "kind": "star",
+    "area": 825,
+    "bbox": [
+      1983,
+      636,
+      2023,
+      678
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-012.png",
+    "kind": "star",
+    "area": 823,
+    "bbox": [
+      1735,
+      639,
+      1775,
+      683
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-013.png",
+    "kind": "star",
+    "area": 539,
+    "bbox": [
+      2107,
+      627,
+      2133,
+      657
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-014.png",
+    "kind": "star",
+    "area": 454,
+    "bbox": [
+      343,
+      634,
+      369,
+      659
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-015.png",
+    "kind": "star",
+    "area": 412,
+    "bbox": [
+      877,
+      614,
+      899,
+      640
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-016.png",
+    "kind": "star",
+    "area": 340,
+    "bbox": [
+      790,
+      647,
+      811,
+      669
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-017.png",
+    "kind": "star",
+    "area": 340,
+    "bbox": [
+      598,
+      661,
+      622,
+      681
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-018.png",
+    "kind": "star",
+    "area": 311,
+    "bbox": [
+      756,
+      631,
+      776,
+      655
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-019.png",
+    "kind": "star",
+    "area": 304,
+    "bbox": [
+      1502,
+      659,
+      1525,
+      676
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-020.png",
+    "kind": "star",
+    "area": 303,
+    "bbox": [
+      909,
+      649,
+      928,
+      671
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-021.png",
+    "kind": "star",
+    "area": 292,
+    "bbox": [
+      33,
+      653,
+      54,
+      675
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-022.png",
+    "kind": "star",
+    "area": 267,
+    "bbox": [
+      1063,
+      646,
+      1084,
+      669
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-023.png",
+    "kind": "star",
+    "area": 261,
+    "bbox": [
+      1882,
+      639,
+      1899,
+      657
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-024.png",
+    "kind": "star",
+    "area": 253,
+    "bbox": [
+      56,
+      630,
+      76,
+      649
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-025.png",
+    "kind": "star",
+    "area": 250,
+    "bbox": [
+      1491,
+      606,
+      1510,
+      626
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-026.png",
+    "kind": "star",
+    "area": 248,
+    "bbox": [
+      644,
+      640,
+      663,
+      658
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-027.png",
+    "kind": "star",
+    "area": 233,
+    "bbox": [
+      1159,
+      646,
+      1175,
+      665
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-028.png",
+    "kind": "star",
+    "area": 227,
+    "bbox": [
+      1818,
+      655,
+      1835,
+      673
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-029.png",
+    "kind": "star",
+    "area": 200,
+    "bbox": [
+      1649,
+      624,
+      1666,
+      641
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-030.png",
+    "kind": "star",
+    "area": 177,
+    "bbox": [
+      2077,
+      658,
+      2091,
+      673
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-031.png",
+    "kind": "star",
+    "area": 174,
+    "bbox": [
+      166,
+      661,
+      182,
+      674
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-032.png",
+    "kind": "star",
+    "area": 163,
+    "bbox": [
+      206,
+      645,
+      222,
+      659
+    ]
+  },
+  {
+    "file": "assets/banner/elements/star/star-033.png",
+    "kind": "star",
+    "area": 129,
+    "bbox": [
+      1307,
+      635,
+      1321,
+      650
+    ]
+  }
+]

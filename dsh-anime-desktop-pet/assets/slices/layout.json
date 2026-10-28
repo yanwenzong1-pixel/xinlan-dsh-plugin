@@ -1,0 +1,542 @@
+{
+  "version": 1,
+  "stage": {
+    "mode": "viewport",
+    "coordinateSpace": "normalized",
+    "sizeUnit": "min-viewport"
+  },
+  "breakpoints": {
+    "wide": 1280,
+    "medium": 768
+  },
+  "responsive": {
+    "medium": {
+      "scaleMultiplier": 0.86
+    },
+    "narrow": {
+      "scaleMultiplier": 0.68,
+      "hideLayers": [
+        "L3"
+      ]
+    }
+  },
+  "layers": {
+    "L0": 0,
+    "L1": 10,
+    "L2": 20,
+    "L3": 30,
+    "L4": 40
+  },
+  "interactions": {
+    "petClick": {
+      "bubbleCount": 3,
+      "bubbleLayer": "L3",
+      "bubbleIntervalMs": 1200,
+      "bubbleCap": 8,
+      "bubbleSlices": [
+        "fx-bubble-large"
+      ],
+      "bubbleWidth": 0.045
+    }
+  },
+  "elements": [
+    {
+      "instanceId": "badge-live",
+      "slice": "ui-badge-live",
+      "layer": "L4",
+      "anchor": {
+        "x": 0.095,
+        "y": 0.075
+      },
+      "scale": 0.16,
+      "rotation": -3,
+      "opacity": 1,
+      "zIndex": 45,
+      "animation": {
+        "type": "float",
+        "duration": 3900,
+        "delay": 420,
+        "amplitude": 5
+      },
+      "parallax": 0.1,
+      "interactive": false,
+      "id": "badge-live",
+      "draggable": true
+    },
+    {
+      "instanceId": "plaque-cheer",
+      "slice": "ui-plaque-cheer",
+      "layer": "L4",
+      "anchor": {
+        "x": 0.052,
+        "y": 0.42
+      },
+      "scale": 0.105,
+      "rotation": 2,
+      "opacity": 1,
+      "zIndex": 44,
+      "animation": {
+        "type": "sway",
+        "duration": 5200,
+        "delay": 260,
+        "amplitude": 1.8
+      },
+      "parallax": 0.04,
+      "interactive": false,
+      "id": "plaque-cheer",
+      "draggable": true
+    },
+    {
+      "instanceId": "bubble-01",
+      "slice": "ui-bubble-01",
+      "layer": "L4",
+      "anchor": {
+        "x": 0.22,
+        "y": 0.55
+      },
+      "scale": 0.17,
+      "rotation": -2,
+      "opacity": 0.96,
+      "zIndex": 43,
+      "animation": {
+        "type": "float",
+        "duration": 4100,
+        "delay": 620,
+        "amplitude": 6
+      },
+      "parallax": 0.08,
+      "interactive": false,
+      "id": "bubble-01",
+      "draggable": true
+    },
+    {
+      "instanceId": "bubble-02",
+      "slice": "ui-bubble-02",
+      "layer": "L4",
+      "anchor": {
+        "x": 0.285,
+        "y": 0.63
+      },
+      "scale": 0.16,
+      "rotation": 1.5,
+      "opacity": 0.95,
+      "zIndex": 43,
+      "animation": {
+        "type": "float",
+        "duration": 4400,
+        "delay": 980,
+        "amplitude": 7
+      },
+      "parallax": 0.07,
+      "interactive": false,
+      "id": "bubble-02",
+      "draggable": true
+    },
+    {
+      "instanceId": "bubble-03",
+      "slice": "ui-bubble-03",
+      "layer": "L4",
+      "anchor": {
+        "x": 0.205,
+        "y": 0.71
+      },
+      "scale": 0.15,
+      "rotation": -1.5,
+      "opacity": 0.94,
+      "zIndex": 43,
+      "animation": {
+        "type": "float",
+        "duration": 4700,
+        "delay": 1440,
+        "amplitude": 6
+      },
+      "parallax": 0.06,
+      "interactive": false,
+      "id": "bubble-03",
+      "draggable": true
+    },
+    {
+      "instanceId": "bubble-04",
+      "slice": "ui-bubble-04",
+      "layer": "L4",
+      "anchor": {
+        "x": 0.29,
+        "y": 0.79
+      },
+      "scale": 0.14,
+      "rotation": 2.2,
+      "opacity": 0.94,
+      "zIndex": 43,
+      "animation": {
+        "type": "float",
+        "duration": 4300,
+        "delay": 300,
+        "amplitude": 8
+      },
+      "parallax": 0.05,
+      "interactive": false,
+      "responsive": {
+        "narrow": {
+          "hidden": true
+        }
+      },
+      "id": "bubble-04",
+      "draggable": true
+    },
+    {
+      "instanceId": "fish-01",
+      "slice": "pet-fish-idle-01",
+      "layer": "L2",
+      "anchor": {
+        "x": 0.915,
+        "y": 0.25
+      },
+      "scale": 0.095,
+      "rotation": 3,
+      "opacity": 1,
+      "zIndex": 32,
+      "animation": {
+        "type": "float",
+        "duration": 3600,
+        "delay": 180,
+        "amplitude": 7
+      },
+      "parallax": 0.12,
+      "interactive": false,
+      "id": "fish-01",
+      "draggable": true
+    },
+    {
+      "instanceId": "fish-02",
+      "slice": "pet-fish-idle-02",
+      "layer": "L2",
+      "anchor": {
+        "x": 0.93,
+        "y": 0.36
+      },
+      "scale": 0.09,
+      "rotation": -2,
+      "opacity": 1,
+      "zIndex": 32,
+      "animation": {
+        "type": "float",
+        "duration": 4000,
+        "delay": 760,
+        "amplitude": 6
+      },
+      "parallax": 0.1,
+      "interactive": false,
+      "id": "fish-02",
+      "draggable": true
+    },
+    {
+      "instanceId": "fish-03",
+      "slice": "pet-fish-idle-03",
+      "layer": "L2",
+      "anchor": {
+        "x": 0.91,
+        "y": 0.47
+      },
+      "scale": 0.095,
+      "rotation": 2.5,
+      "opacity": 1,
+      "zIndex": 32,
+      "animation": {
+        "type": "tailWave",
+        "duration": 3800,
+        "delay": 1280,
+        "amplitude": 2.5
+      },
+      "parallax": 0.11,
+      "interactive": false,
+      "id": "fish-03",
+      "draggable": true
+    },
+    {
+      "instanceId": "fish-04",
+      "slice": "pet-fish-idle-04",
+      "layer": "L2",
+      "anchor": {
+        "x": 0.925,
+        "y": 0.58
+      },
+      "scale": 0.09,
+      "rotation": -3,
+      "opacity": 1,
+      "zIndex": 32,
+      "animation": {
+        "type": "blink",
+        "duration": 6200,
+        "delay": 540
+      },
+      "parallax": 0.09,
+      "interactive": false,
+      "id": "fish-04",
+      "draggable": true
+    },
+    {
+      "instanceId": "fx-001",
+      "slice": "fx-sprinkle-001",
+      "layer": "L3",
+      "anchor": {
+        "x": 0.1,
+        "y": 0.25
+      },
+      "scale": 0.05,
+      "rotation": 8,
+      "opacity": 0.9,
+      "zIndex": 30,
+      "animation": {
+        "type": "bubbleRise",
+        "duration": 7000,
+        "delay": 200,
+        "amplitude": 18
+      },
+      "parallax": 0.16,
+      "interactive": false,
+      "id": "fx-001",
+      "draggable": false
+    },
+    {
+      "instanceId": "fx-002",
+      "slice": "fx-sprinkle-004",
+      "layer": "L3",
+      "anchor": {
+        "x": 0.38,
+        "y": 0.2
+      },
+      "scale": 0.04,
+      "rotation": -6,
+      "opacity": 0.9,
+      "zIndex": 30,
+      "animation": {
+        "type": "float",
+        "duration": 6000,
+        "delay": 840,
+        "amplitude": 10
+      },
+      "parallax": 0.12,
+      "interactive": false,
+      "id": "fx-002",
+      "draggable": false
+    },
+    {
+      "instanceId": "fx-003",
+      "slice": "fx-sprinkle-006",
+      "layer": "L3",
+      "anchor": {
+        "x": 0.72,
+        "y": 0.22
+      },
+      "scale": 0.045,
+      "rotation": 4,
+      "opacity": 0.85,
+      "zIndex": 30,
+      "animation": {
+        "type": "float",
+        "duration": 6500,
+        "delay": 1200,
+        "amplitude": 9
+      },
+      "parallax": 0.14,
+      "interactive": false,
+      "id": "fx-003",
+      "draggable": false
+    },
+    {
+      "instanceId": "fx-004",
+      "slice": "fx-sprinkle-009",
+      "layer": "L3",
+      "anchor": {
+        "x": 0.47,
+        "y": 0.36
+      },
+      "scale": 0.035,
+      "rotation": -10,
+      "opacity": 0.9,
+      "zIndex": 30,
+      "animation": {
+        "type": "float",
+        "duration": 5600,
+        "delay": 300,
+        "amplitude": 7
+      },
+      "parallax": 0.18,
+      "interactive": false,
+      "id": "fx-004",
+      "draggable": false
+    },
+    {
+      "instanceId": "fx-005",
+      "slice": "fx-sprinkle-011",
+      "layer": "L3",
+      "anchor": {
+        "x": 0.83,
+        "y": 0.34
+      },
+      "scale": 0.06,
+      "rotation": 6,
+      "opacity": 0.88,
+      "zIndex": 30,
+      "animation": {
+        "type": "float",
+        "duration": 6100,
+        "delay": 1600,
+        "amplitude": 9
+      },
+      "parallax": 0.13,
+      "interactive": false,
+      "id": "fx-005",
+      "draggable": false
+    },
+    {
+      "instanceId": "fx-006",
+      "slice": "fx-sprinkle-012",
+      "layer": "L3",
+      "anchor": {
+        "x": 0.55,
+        "y": 0.7
+      },
+      "scale": 0.045,
+      "rotation": -4,
+      "opacity": 0.88,
+      "zIndex": 30,
+      "animation": {
+        "type": "bubbleRise",
+        "duration": 7600,
+        "delay": 1000,
+        "amplitude": 16
+      },
+      "parallax": 0.1,
+      "interactive": false,
+      "id": "fx-006",
+      "draggable": false
+    },
+    {
+      "instanceId": "fx-007",
+      "slice": "fx-sprinkle-013",
+      "layer": "L3",
+      "anchor": {
+        "x": 0.67,
+        "y": 0.78
+      },
+      "scale": 0.07,
+      "rotation": 3,
+      "opacity": 0.85,
+      "zIndex": 30,
+      "animation": {
+        "type": "float",
+        "duration": 6800,
+        "delay": 500,
+        "amplitude": 8
+      },
+      "parallax": 0.08,
+      "interactive": false,
+      "id": "fx-007",
+      "draggable": false
+    },
+    {
+      "instanceId": "bottom-strip",
+      "id": "bottom-strip",
+      "slice": "ui-bottom-strip",
+      "layer": "L1",
+      "anchor": {
+        "x": 1,
+        "y": 1
+      },
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "zIndex": 9,
+      "animation": {
+        "type": "none",
+        "duration": 4000,
+        "delay": 0,
+        "amplitude": 0
+      },
+      "parallax": 0,
+      "interactive": false,
+      "draggable": false,
+      "widthMode": "intrinsic",
+      "align": "bottom-right"
+    }
+  ],
+  "effects": {
+    "lightSweep": {
+      "durationMs": 12000,
+      "opacity": 0.22
+    }
+  },
+  "emitters": [
+    {
+      "id": "plaque-float-fx",
+      "attachTo": "plaque-cheer",
+      "slices": [
+        "fx-bubble-large",
+        "fx-sprinkle-004",
+        "fx-sprinkle-009",
+        "fx-sprinkle-002"
+      ],
+      "intervalMs": [
+        650,
+        1100
+      ],
+      "perSpawn": [
+        1,
+        2
+      ],
+      "cap": 10,
+      "durationMs": [
+        3200,
+        4800
+      ],
+      "risePx": [
+        90,
+        170
+      ],
+      "spreadPx": 52,
+      "sizePx": [
+        18,
+        34
+      ],
+      "zIndex": 34
+    },
+    {
+      "id": "bottom-strip-fx",
+      "attachTo": "bottom-strip",
+      "slices": [
+        "fx-sprinkle-004",
+        "fx-sprinkle-009",
+        "fx-sprinkle-002",
+        "fx-sprinkle-001",
+        "fx-sprinkle-003",
+        "fx-sprinkle-007",
+        "fx-sprinkle-011",
+        "fx-bubble-large"
+      ],
+      "intervalMs": [
+        480,
+        900
+      ],
+      "perSpawn": [
+        1,
+        2
+      ],
+      "cap": 8,
+      "durationMs": [
+        3200,
+        5200
+      ],
+      "risePx": [
+        80,
+        170
+      ],
+      "spreadPx": 150,
+      "sizePx": [
+        16,
+        34
+      ],
+      "zIndex": 34
+    }
+  ]
+}

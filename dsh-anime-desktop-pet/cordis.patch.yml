@@ -1,0 +1,4 @@
+# dsh-anime-desktop-pet bundle patch: insert the plugin row into a profile.
+- insert:
+    - id: dsh-anime-desktop-pet
+      name: '@dsh-external/dsh-anime-desktop-pet'

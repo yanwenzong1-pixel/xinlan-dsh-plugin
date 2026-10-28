@@ -1,13 +1,13 @@
 # DSH Dock
 
-**More ports for DeepSeek Harness (DSH) — three ready-to-use plugins, no build step after cloning.**
+**More ports for DeepSeek Harness (DSH) — four ready-to-use plugins plus one auto-dispatch workflow spec, no build step after cloning.**
 
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-0.1.5--rc.1-4f46e5.svg)](#requirements)
 [![No build](https://img.shields.io/badge/install-no%20build%20required-brightgreen.svg)](#quick-start-1-minute)
 中文 · English
 
-`DSH plugin` · `DeepSeek Harness` · `DSH external plugin` · `cordis patch bundle` · `AI agent tooling` · `subagent task dispatch`
+`DSH plugin` · `DeepSeek Harness` · `DSH external plugin` · `cordis patch bundle` · `AI agent tooling` · `subagent task dispatch` · `auto dispatch` · `multi-agent workflow`
 
 ---
 
@@ -19,7 +19,7 @@
 | Handing a whole job to a subagent, but the intermediate output floods your context | 🧩 **PTC Task** | The subagent runs in PTC (code) mode: it writes one program, keeps the intermediate output inside it, and returns **only the path to the result** |
 | Long runs die or overspend, and you notice afterwards | 🔔 **Dialogue Alert** | Forced interruptions ring immediately, by severity; the sidebar also shows DeepSeek conversation count and balance |
 
-All three load on the DSH side only: no DSH source edits, no touching your session data.
+All four plugins load on the DSH side only: no DSH source edits, no touching your session data. The auto-dispatch workflow spec is included separately.
 
 ## Quick start (1 minute)
 
@@ -30,6 +30,7 @@ cd xinlan-dsh-plugin
 dsh plugin --profile web add ./dsh-quick-append
 dsh plugin --profile web add ./dsh-ptc-task
 dsh plugin --profile web add ./dsh-dialogue-alert-message
+dsh plugin --profile web add ./dsh-anime-desktop-pet
 ```
 
 Restart dsh web (or refresh the page). After Quick Append is installed, the composer gets two extra buttons: ⚡ and 🔧.
@@ -74,7 +75,9 @@ Then run `pnpm install` once inside that profile directory and restart dsh web.
 | --- | --- | --- | --- | --- |
 | ⚡ Quick Append | [`dsh-quick-append/`](dsh-quick-append/README.md) | `@dsh-external/dsh-quick-append` | 0.5.3 | Composer "quick append" button plus a stored-command menu and editor dialog (the dialog is portaled to body, no longer covered by the sidebar) |
 | 🧩 PTC Task | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | Registers the `ptc_task` tool: hand a whole job to a PTC-scoped subagent |
-| 🔔 Dialogue Alert | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.3 | Severity-based interruption alarms plus conversation count / balance (collapses to an icon when space runs out) |
+| 🔔 Dialogue Alert | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.4 | Severity-based interruption alarms plus conversation count / balance (collapses to an icon when space runs out; long-connection push with a 45s fallback) |
+| 🧭 Auto Dispatch | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | — (workflow spec) | v1 | User decision → todo maintenance → execution slots: two skills, safe dispatch script, slot bootstrap/backup/version checks; monitoring dashboard is BYO |
+| 🐟 Anime Desktop Pet (author use) | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.7 | A simple desktop pet + decoration the author uses; no recommendation implied. |
 
 ### ⚡ Quick Append · [details](dsh-quick-append/README.md)
 
@@ -110,7 +113,31 @@ The optimise context has three parts (each with a code anchor — no black box):
 - Plays a chime when a conversation finishes normally, and a severity-graded alarm on **non-user-initiated** interruptions (tool error / forced cancel / session eviction / host restart).
 - User-initiated cancels stay silent.
 - The sidebar status bar shows DeepSeek account usage: conversation count / balance (since v0.2.2 the "today's cost" figure is no longer displayed; it is still returned by `/api/usage`). **Since v0.2.3 it adapts to the available width**: when the footer action row is taken over by a sibling (e.g. the built-in Cordis row) it collapses to a 12px icon with the full data in the tooltip, and expands again when space returns — without squeezing the sibling in turn.
+- **v0.2.4 fixes "balance figures vanish after switching http to a long connection"**: when v0.2.3-push replaced 1s polling with push, the host read the uninjected `typertGateway` property inside a loader-isolated fiber; the throw was swallowed by `apply`'s fallback, so the Web API routes and balance timer after it were never registered and the client only saw 404. The gateway is now read lazily through `ctx.get()` (late gateway attach is picked up; failed publishes do not commit their change signature and retry on the next tick), and the push block has its own try/catch — an unavailable push never affects the Web API / balance / alarms; the client retries the first read at 0/1/3/10s.
 - Alarms travel over the plugin's own channel (host queue `/api/alarm` → client WebAudio + ack) and depend on no third-party plugin.
+
+### 🧭 Auto-dispatch workflow · [spec package](dsh-auto-dispatch-specification/README.md)
+
+A production-tested automation workflow for DSH: **User decision → Todo maintenance → Execution slots**. This is a **workflow spec package** (skills + rules + dispatch script + slot bootstrap/backup/version-check), not a regular plugin.
+
+- **7-slot topology**: U (single user entry) → A (single dispatcher) → B/F builders, C release, E crash, G GitHub. One task goes to exactly one execution slot; replies go back through A → U.
+- **Receipt means delivered**: writing to `outbox/` is not enough; `state/<name>.done = SENT -> <slot>` is the proof. Same-name files can only be sent once; retries need a new id.
+- **Safe dispatch chain**: health check → dry run → confirm → receipt → ledger/reply; role/type guards; required acceptance criteria and boundaries.
+- **Two skills**: `y-automation-portable` installs/moves/backs up the chain and follows DSH versions; `y-task-distribution-auto` is the only safe daily dispatch entry.
+- **Five round rules**: no in-turn `sleep` waiting; new tasks go to the todo list by default; receipt means delivered; health-check and notify after restarts; consolidate the todo list on every change.
+- **Windows-local deployment**: scheduled tasks, PowerShell hidden shells and the DSH profile/slot layout target Windows; Linux/macOS are not promised.
+- **Not installed with `dsh plugin add`**: follow the spec README to copy `skills/`, `support/` and the config, then run `node scripts/init-slots.mjs --dry-run` for the seven default slots; use `relay-dispatch.mjs check` for a live health check.
+
+| DSH slot sessions | Self-built monitoring dashboard (**not included**) |
+| --- | --- |
+| ![slot sessions](dsh-auto-dispatch-specification/docs/images/slots-session-list.png) | ![dashboard example](dsh-auto-dispatch-specification/docs/images/monitor-dashboard-example.png) |
+
+> ⚠️ **The second screenshot (monitoring dashboard) is not part of this repository.** It is a dashboard the author built separately, shown only to illustrate slot relationships/online status/current tasks/replies. This repository open-sources the automation workflow itself (skills, rules, dispatch scripts, slot bootstrap, backup and version-check); it does **not** include the dashboard frontend/backend/data source/deployment. Users must build or connect their own monitoring panel, or use the DSH session list and `relay-dispatch.mjs check/status` text output. Session names, task titles and slot IDs in the screenshots are illustrative.
+
+### 🐟 Anime Desktop Pet (author use)
+
+A simple desktop pet + decoration the author uses; no recommendation implied. See the [plugin README](dsh-anime-desktop-pet/README.md) for maintenance details.
+
 
 ## Read this pitfall first (it can take down the whole dsh-web)
 
@@ -125,6 +152,8 @@ Installing through `dsh plugin … add` satisfies this automatically; hand-editi
 dsh-quick-append/            host half src/index.ts + client half src/client/ + committed lib/ + test/
 dsh-dialogue-alert-message/  same shape (plus SPEC.md, integration-check.mjs)
 dsh-ptc-task/                host-only plugin: src/index.ts + lib/index.js, no client half
+dsh-anime-desktop-pet/  independent overlay: client (Shadow DOM) + host (GIF route) + assets/ + scripts/ + test/
+dsh-auto-dispatch-specification/  auto-dispatch workflow spec: skills + rules + dispatch/slot/backup scripts (monitoring dashboard not included)
 docs/                        design and iteration notes (screenshots, pitfalls)
 ```
 
@@ -140,6 +169,7 @@ Fixed files inside each plugin directory:
 - Node.js ≥ 20; **loading** a plugin needs no build, editing its source does
 - Build scripts are Windows PowerShell (`scripts/build.ps1`, driven by `$env:DSH_CHECKOUT` or a `-Checkout` argument)
 - `node_modules/` is not committed; the `lib/` build output **is** committed on purpose
+- The auto-dispatch spec targets a **Windows-local DSH** (scheduled tasks/PowerShell); the monitoring dashboard is not part of the repo
 
 ## Development and tests
 
@@ -157,8 +187,17 @@ npm test          # node --test
 
 ## Keywords
 
-`DSH` · `DSH plugin` · `DeepSeek Harness` · `DeepSeek Harness plugin` · `DSH external plugin` · `cordis` · `cordis bundle` · `profile bundle` · `prompt preset` · `stored commands` · `subagent dispatch` · `PTC` · `interruption alarm` · `usage monitor` · `AI agent tooling`
+`DSH` · `DSH plugin` · `DeepSeek Harness` · `DeepSeek Harness plugin` · `DSH external plugin` · `cordis` · `cordis bundle` · `profile bundle` · `prompt preset` · `stored commands` · `subagent dispatch` · `PTC` · `interruption alarm` · `usage monitor` · `AI agent tooling` · `auto dispatch` · `multi-agent workflow` · `workflow automation`
 
 ## License
 
 BSD-3-Clause — see [LICENSE](LICENSE). Each plugin's `package.json` declares `license: BSD-3-Clause` as well.
+
+
+
+
+
+
+
+
+
