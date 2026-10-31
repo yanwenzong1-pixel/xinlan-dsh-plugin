@@ -82,7 +82,7 @@ test('loader fetches and validates manifest/layout; invalid payload rejects', as
 test('mountScene renders every layout element with the expected CSS/asset mapping', async () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://example.test', pretendToBeVisual: true })
   Object.defineProperty(dom.window, 'devicePixelRatio', { value: 1, configurable: true })
-  const storage = new Map()
+  const storage = new Map([['dsh-anime-desktop-pet/overlay-visible-v2', 'true']])
   const scene = mountScene({
     document: dom.window.document,
     window: dom.window,
@@ -130,15 +130,33 @@ test('mountScene renders every layout element with the expected CSS/asset mappin
     key: 'F12', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
   }))
   assert.equal(scene.host.style.display, 'none')
-  assert.equal(storage.get('dsh-anime-desktop-pet/overlay-visible'), 'false')
+  assert.equal(storage.get('dsh-anime-desktop-pet/overlay-visible-v2'), 'false')
   dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
     key: 'F12', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
   }))
   assert.equal(scene.host.style.display, '')
-  assert.equal(storage.get('dsh-anime-desktop-pet/overlay-visible'), 'true')
+  assert.equal(storage.get('dsh-anime-desktop-pet/overlay-visible-v2'), 'true')
 
   scene.dispose()
   assert.equal(dom.window.document.querySelector('[data-xllh-scene-host]'), null, 'dispose removes the host')
+  dom.window.close()
+})
+
+test('mountScene defaults to hidden with no persisted preference', async () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://example.test', pretendToBeVisual: true })
+  const scene = mountScene({
+    document: dom.window.document,
+    window: dom.window,
+    manifest,
+    layout,
+    options: {
+      storage: { getItem: () => null, setItem() {} },
+    },
+  })
+  await scene.ready
+  assert.equal(scene.host.style.display, 'none', 'scene must be hidden on first mount')
+  assert.equal(scene.stage.dataset.paused, 'true', 'hidden scene must not run animations')
+  scene.dispose()
   dom.window.close()
 })
 

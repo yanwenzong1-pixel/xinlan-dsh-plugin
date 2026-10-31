@@ -1,6 +1,6 @@
 {
   "name": "@dsh-external/dsh-anime-desktop-pet",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "description": "DSH material-driven live-room scene overlay: named balloon/fish/girl/banner slices with @1x/@2x transparency, normalized layout.json choreography, CSS motion primitives, seeded single-state interaction, bubble/linkage/pause/reduced-motion support, plus the legacy sidebar pet overlay fallback.",
   "private": true,
   "type": "module",

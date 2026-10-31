@@ -64,6 +64,8 @@ const page = await context.newPage()
 // This script verifies the legacy overlay acceptance path; the live scene has its own verifier.
 await page.addInitScript(() => {
   window.__DSH_ANIME_PET_OPTIONS__ = { ...(window.__DSH_ANIME_PET_OPTIONS__ ?? {}), scene: false }
+  // The component is hidden by default; this verifier explicitly opts in for screenshots.
+  localStorage.setItem('dsh-anime-desktop-pet/overlay-visible-v2', 'true')
 })
 const pageErrors = []
 page.on('pageerror', (error) => pageErrors.push(String(error)))
@@ -528,7 +530,7 @@ try {
   // 6e) Ctrl+Shift+F12 toggles the whole overlay and persists the preference.
   const shortcut = await page.evaluate(() => {
     const host = document.querySelector('[data-xllh-pet-host]')
-    const storageKey = 'dsh-anime-desktop-pet/overlay-visible'
+    const storageKey = 'dsh-anime-desktop-pet/overlay-visible-v2'
     const press = () => {
       const event = new KeyboardEvent('keydown', {
         key: 'F12', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,

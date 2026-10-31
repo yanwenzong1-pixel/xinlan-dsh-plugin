@@ -82,7 +82,7 @@ window.__ModuleLoader__.load({
 		};
 		const BANNER_POSITION_KEY = "dsh-anime-desktop-pet/banner-position";
 		const BANNER_VISIBLE_KEY = "dsh-anime-desktop-pet/banner-visible";
-		const OVERLAY_VISIBLE_KEY = "dsh-anime-desktop-pet/overlay-visible";
+		const OVERLAY_VISIBLE_KEY = "dsh-anime-desktop-pet/overlay-visible-v2";
 		function bannerUrl(base = BANNER_BASE_PATH) {
 			return `${base}${BANNER_FILE}?v=3`;
 		}
@@ -149,9 +149,9 @@ window.__ModuleLoader__.load({
 		function parseBannerVisible(raw) {
 			return raw !== "false" && raw !== "0";
 		}
-		/** Global overlay visibility from Ctrl+Shift+F12; absent means visible. */
+		/** Global overlay visibility from Ctrl+Shift+F12; absent or invalid means hidden. */
 		function parseOverlayVisible(raw) {
-			return raw !== "false" && raw !== "0";
+			return raw === "true" || raw === "1";
 		}
 		/** localStorage key for the fixed character's last dragged position. */
 		const FIXED_POSITION_KEY = "dsh-anime-desktop-pet/fixed-position";
@@ -681,7 +681,7 @@ window.__ModuleLoader__.load({
 			let savedOverflow = null;
 			let fixedPosition = null;
 			let fixedDrag = null;
-			let uiHidden = !parseOverlayVisible(storage?.getItem?.("dsh-anime-desktop-pet/overlay-visible") ?? null);
+			let uiHidden = !parseOverlayVisible(storage?.getItem?.("dsh-anime-desktop-pet/overlay-visible-v2") ?? null);
 			let selection = normalizeSelection(parseSelection(storage?.getItem?.("dsh-anime-desktop-pet/selection") ?? null), animations);
 			let destroyed = false;
 			let frame = null;
@@ -2196,7 +2196,7 @@ window.__ModuleLoader__.load({
 		function resolveVisibility(options) {
 			const storage = options.storage ?? options.window?.localStorage ?? null;
 			if (options.visible === false) return false;
-			return parseOverlayVisible(storage?.getItem?.("dsh-anime-desktop-pet/overlay-visible") ?? null);
+			return parseOverlayVisible(storage?.getItem?.("dsh-anime-desktop-pet/overlay-visible-v2") ?? null);
 		}
 		/**
 		* Mount the scene layer. Returns immediately; `ready` resolves once manifest,

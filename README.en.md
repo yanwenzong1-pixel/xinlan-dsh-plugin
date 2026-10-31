@@ -85,7 +85,7 @@ Then run `pnpm install` once inside that profile directory and restart dsh web.
 | 🧩 PTC Task | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | Registers the `ptc_task` tool: hand a whole job to a PTC-scoped subagent |
 | 🔔 Dialogue Alert | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.4 | Severity-based interruption alarms plus conversation count / balance (collapses to an icon when space runs out; long-connection push with a 45s fallback) |
 | 🧭 Auto Dispatch | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | — (workflow spec) | v1 | User decision → todo maintenance → execution slots; author's environment measured 99.6% cache hit and ≈¥5.47 per 100M tokens; monitoring dashboard is BYO |
-| 🐟 Anime Desktop Pet (author use) | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.7 | A simple desktop pet + decoration the author uses; no recommendation implied. |
+| 🐟 Anime Desktop Pet (author use) | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.8 | A simple desktop pet + decoration the author uses; no recommendation implied. Hidden by default since v0.9.8; press Ctrl+Shift+F12 to show. |
 
 ### ⚡ Quick Append · [details](dsh-quick-append/README.md)
 
@@ -220,6 +220,7 @@ npm test          # node --test
 ## License
 
 BSD-3-Clause — see [LICENSE](LICENSE). Each plugin's `package.json` declares `license: BSD-3-Clause` as well.
+
 
 
 

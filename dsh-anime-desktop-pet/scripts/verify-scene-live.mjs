@@ -36,6 +36,7 @@ await page.addInitScript(() => {
   window.__DSH_ANIME_PET_SCENE_OPTIONS__ = { ...(window.__DSH_ANIME_PET_SCENE_OPTIONS__ ?? {}), enabled: true, seed: 20261026 }
   localStorage.setItem('dsh-anime-desktop-pet/fixed-position', JSON.stringify({ x: 40, y: 740 }))
   localStorage.setItem('dsh-anime-desktop-pet/banner-visible', 'true')
+  localStorage.setItem('dsh-anime-desktop-pet/overlay-visible-v2', 'true')
 })
 
 async function sceneState() {
@@ -280,7 +281,7 @@ try {
     document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'F12', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }))
   })
   const hiddenState = await page.evaluate(() => ({
-    storage: localStorage.getItem('dsh-anime-desktop-pet/overlay-visible'),
+    storage: localStorage.getItem('dsh-anime-desktop-pet/overlay-visible-v2'),
     sceneHidden: document.querySelector('[data-xllh-scene-host]')?.style.display === 'none',
     overlayHidden: document.querySelector('[data-xllh-pet-host]')?.style.display === 'none',
   }))

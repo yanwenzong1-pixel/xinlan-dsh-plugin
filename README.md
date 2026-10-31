@@ -85,7 +85,7 @@ dsh plugin --profile web add ./dsh-dialogue-alert-message
 | 🧩 一键派活 | [`dsh-ptc-task/`](dsh-ptc-task/README.md) | `@dsh-external/dsh-ptc-task` | 0.1.0 | 向宿主注册 `ptc_task` 工具，把整件事交给 PTC 作用域子代理 |
 | 🔔 报警铃铛 | [`dsh-dialogue-alert-message/`](dsh-dialogue-alert-message/README.md) | `@dsh-external/dsh-dialogue-alert-message` | 0.2.4 | 对话中断分级报警 + 侧栏对话数与余额显示（空间不够自动收成图标；长连接推送 + 45s 兜底） |
 | 🧭 全自动派发 | [`dsh-auto-dispatch-specification/`](dsh-auto-dispatch-specification/README.md) | —（工作流规格包） | v1 | 用户决策 → 待办维护 → 执行槽位的自动派发链路；作者环境实测缓存命中 99.6%、约 ¥5.47/亿 token；监控 dashboard 需自建 |
-| 🐟 动画桌宠（作者自用） | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.7 | 作者自己使用的简单桌宠+装饰，无推荐功能。 |
+| 🐟 动画桌宠（作者自用） | [`dsh-anime-desktop-pet/`](dsh-anime-desktop-pet/README.md) | `@dsh-external/dsh-anime-desktop-pet` | 0.9.8 | 作者自己使用的简单桌宠+装饰，无推荐功能；v0.9.8 起默认隐藏，按 Ctrl+Shift+F12 显示。 |
 
 ### ⚡ 闪电追加 · [详细说明](dsh-quick-append/README.md)
 
@@ -220,6 +220,7 @@ npm test          # node --test
 ## 许可
 
 BSD-3-Clause，见 [LICENSE](LICENSE)。四个插件的 `package.json` 同样声明 `license: BSD-3-Clause`。
+
 
 
 

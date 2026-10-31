@@ -2,6 +2,7 @@
 
 > 作者自己使用的简单桌宠 + 装饰，无推荐功能。以下内容仅供维护/复现参考。
 > 平台：作者在 **DSH Web 端**开发/验证；**Desktop 桌面端需要自行做兼容化改造**，不保证开箱即用。
+> **v0.9.8 起默认隐藏**：避免 agent 调试截屏/录屏时把桌宠拍进去；页面加载后不显示任何桌宠元素。按 `Ctrl+Shift+F12` 显示，再按一次隐藏；显隐状态会记住。
 
 独立 DSH 覆盖层插件。**v0.9.7 起默认挂载素材驱动的「蓝色大肥鱼直播间」场景，同时恢复旧版可拖动/等比缩放的大横幅、左下角固定入口 GIF，以及对话行旁的工作/很累小动画与设置里的两个动画开关**：场景切出 28 个独立透明元素，按 `layout.json` 的归一化坐标/图层/动效还原参考环境图；LIVE、竖幅、4 个文字气泡、4 只金鱼均可拖拽并记住位置（F5 保持）；场景不再渲染两个女孩主宠和固定顶部横幅。旧版完整模式仍可用 `scene: false` 回退。
 
@@ -11,7 +12,7 @@
 支持右键设置、动画库选择、**角色三视图预览与右键复制图片**；
 **不修改、不 fork、不 patch DSH 侧边栏源码与 DOM**。
 
-- 版本：`0.9.7`（插件目录 `dsh-anime-desktop-pet/`，包名 `@dsh-external/dsh-anime-desktop-pet`）
+- 版本：`0.9.8`（插件目录 `dsh-anime-desktop-pet/`，包名 `@dsh-external/dsh-anime-desktop-pet`）
 - 形态：Client 覆盖层（`src/client/scene.mjs` 新场景 + `scene-core.mjs` 纯逻辑 + 旧 `overlay.mjs` 回退）+ 极薄 Host 半（`src/index.ts`，提供 GIF、三视图、动态横幅、场景 `manifest/layout/@1x/@2x` 路由）
 - 依赖：client 只注入 DSH 公开的 `sessions` 服务；无 React、无第三方运行时依赖
 
@@ -47,7 +48,8 @@
    展示（不循环，仲裁结果不变）；所有动画 `aria-hidden`，不新增后端事件/Remote/持久化格式。
 8. **设置与预览**：固定形象右键 →「设置」；动画库勾选/持久化、单/多动画规则；三视图模态预览与
    右键「复制图片」（PNG 走剪贴板，无「另存为图片」）；固定形象可拖动/记位置；`Ctrl+Shift+F12`
-   一键显隐整个组件，**显隐状态持久化到 localStorage，刷新后保持**；卸载清理全部监听/节点/rAF/objectURL 并释放滚动锁。
+   一键显隐整个组件；**v0.9.8 起默认隐藏**，避免被 agent 截屏/录屏捕获；显隐状态持久化到 localStorage，
+   刷新后保持。卸载清理全部监听/节点/rAF/objectURL 并释放滚动锁。
 9. **桌面直播横幅（v0.8.0 动态化）**：透明 **动画 GIF** 横幅（24 帧、80ms/帧、1086×362，3:1 比例）默认 720×240 显示在
    桌面底部居中；拖动主体移动、拖动右下角蓝色把手等比缩放（240–1920px 宽，保持宽高比与视口内 clamp），
    位置和宽度持久化。设置面板有「展示桌面横幅」开关，**默认开启**；关闭后立即隐藏。
@@ -177,8 +179,8 @@ npm run build
 - 桌面横幅：`BANNER_DEFAULTS`（默认宽 720、最小 240、最大 1920、边距 24、宽高比 2172/724）；
   位置/宽度存于 `dsh-anime-desktop-pet/banner-position`，开关存于
   `dsh-anime-desktop-pet/banner-visible`（缺省开启）。`bannerMarginPx` 可覆盖边距。
-- 总显隐：`OVERLAY_VISIBLE_KEY = dsh-anime-desktop-pet/overlay-visible`（string `true`/`false`，缺省可见；
-  Ctrl+Shift+F12 与设置状态共用）。
+- 总显隐：`OVERLAY_VISIBLE_KEY = dsh-anime-desktop-pet/overlay-visible-v2`（string `true`/`false`，**缺省隐藏**；
+  Ctrl+Shift+F12 与设置状态共用）。旧键 `.../overlay-visible` 已废弃，避免升级后仍按旧“缺省可见”显示。
 - 上下文变体：`CONTEXT_TIRED_THRESHOLD = 45`（两个动画都勾选时严格大于才切换）；`contextUsagePercent(pressure)` 与
   DSH 上下文占用展示一致（优先 `projectedTokens`，回退 `pressureTokens`，上限 100）。
 - 动画库：`src/client/core.mjs` 的 `ANIMATIONS`（`id`/`name`/`characterName`/`file`/`enabled`/`threeView`），
@@ -207,9 +209,9 @@ npm run build
 - 固定形象：独立 `<img data-xllh-pet-fixed>`，默认右下角（视口 - 尺寸 - 24px）；`pointerdown` 拖动、
   `pointerup` 持久化位置（`dsh-anime-desktop-pet/fixed-position`），`render`/`resize` 时 clamp；
   右键菜单复用插件菜单（仅「设置」）。侧栏运行中图标**不再拦截 contextmenu**，DSH 原生菜单保留。
-- 快捷键：`Ctrl+Shift+F12` 在 document 捕获阶段切换整个 host 的显示/隐藏；隐藏时关闭菜单/设置/
-  预览并结束拖动。状态写入 `dsh-anime-desktop-pet/overlay-visible`（缺省可见），F5/重启后
-  保持隐藏或显示；运行态生效，不修改 profile。
+- 快捷键：`Ctrl+Shift+F12` 在 document 捕获阶段切换整个 host 的显示/隐藏；**缺省隐藏**，首次按键显示，
+  再按隐藏。隐藏时关闭菜单/设置/预览并结束拖动。状态写入
+  `dsh-anime-desktop-pet/overlay-visible-v2`（缺省隐藏），F5/重启后保持隐藏或显示；运行态生效，不修改 profile。
 - 三视图资源：角色注册表 `threeView` 字段 → `GIF_BASE_PATH + threeView`；真实图片位于
   `assets/three-view/blue-fat-fish-working.png`，预览只发起一次 `fetch` 得到 blob + objectURL，
   图片展示与「复制图片」共用同一份 blob；关闭/卸载时 revoke objectURL。

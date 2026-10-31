@@ -87,7 +87,9 @@ export const BANNER_DEFAULTS = {
 }
 export const BANNER_POSITION_KEY = 'dsh-anime-desktop-pet/banner-position'
 export const BANNER_VISIBLE_KEY = 'dsh-anime-desktop-pet/banner-visible'
-export const OVERLAY_VISIBLE_KEY = 'dsh-anime-desktop-pet/overlay-visible'
+// v2 key: absent means hidden. The old key defaulted to visible and would keep
+// screenshots noisy after upgrade, so it is intentionally ignored.
+export const OVERLAY_VISIBLE_KEY = 'dsh-anime-desktop-pet/overlay-visible-v2'
 
 export function bannerUrl(base = BANNER_BASE_PATH) {
   return `${base}${BANNER_FILE}?v=${ASSET_VERSION}`
@@ -148,9 +150,9 @@ export function parseBannerVisible(raw) {
   return raw !== 'false' && raw !== '0'
 }
 
-/** Global overlay visibility from Ctrl+Shift+F12; absent means visible. */
+/** Global overlay visibility from Ctrl+Shift+F12; absent or invalid means hidden. */
 export function parseOverlayVisible(raw) {
-  return raw !== 'false' && raw !== '0'
+  return raw === 'true' || raw === '1'
 }
 
 /** localStorage key for the fixed character's last dragged position. */

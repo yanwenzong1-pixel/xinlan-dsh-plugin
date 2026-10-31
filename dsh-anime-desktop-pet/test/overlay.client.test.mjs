@@ -28,7 +28,12 @@ function bench(options = {}) {
   })
   const { window } = dom
   const { document } = window
-  const stored = new Map(options.storedEntries ?? (options.stored === undefined ? [] : [['dsh-anime-desktop-pet/selection', options.stored]]))
+  const entries = [...(options.storedEntries ?? (options.stored === undefined ? [] : [['dsh-anime-desktop-pet/selection', options.stored]]))]
+  // Most tests exercise the shown component; production defaults to hidden.
+  if (options.defaultHidden !== true && !entries.some(([key]) => key === OVERLAY_VISIBLE_KEY)) {
+    entries.push([OVERLAY_VISIBLE_KEY, 'true'])
+  }
+  const stored = new Map(entries)
   const storage = {
     getItem: (key) => (stored.has(key) ? stored.get(key) : null),
     setItem: (key, value) => { stored.set(key, value) },
@@ -561,6 +566,22 @@ test('快捷键 Ctrl+Shift+F12 一键显示/隐藏整个桌宠组件', async () 
   assert.equal(petHost(b2.document).style.display, '')
   assert.equal(b2.stored.get(OVERLAY_VISIBLE_KEY), 'true')
   b2.dom.window.close()
+})
+
+test('默认隐藏：新页面不显示组件，快捷键可显示再隐藏', async () => {
+  const b = bench({ defaultHidden: true })
+  assert.equal(petHost(b.document).style.display, 'none', 'fresh storage must start hidden')
+  assert.equal(b.stored.has(OVERLAY_VISIBLE_KEY), false, 'default must not write a preference')
+  const press = () => b.document.body.dispatchEvent(new b.window.KeyboardEvent('keydown', {
+    key: 'F12', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
+  }))
+  press()
+  assert.equal(petHost(b.document).style.display, '')
+  assert.equal(b.stored.get(OVERLAY_VISIBLE_KEY), 'true')
+  press()
+  assert.equal(petHost(b.document).style.display, 'none')
+  assert.equal(b.stored.get(OVERLAY_VISIBLE_KEY), 'false')
+  b.dom.window.close()
 })
 
 test('设置面板：两个动画均可选，默认只勾工作图；可勾选很累、两个同时激活', async () => {
